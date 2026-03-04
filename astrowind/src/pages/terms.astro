@@ -1,0 +1,68 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+
+let pageData = { title: 'Terms and Conditions', content: null, updatedAt: null };
+
+try {
+  const response = await fetch('http://localhost:3000/api/pages?where[slug][equals]=terms');
+  const result = await response.json();
+  if (result.docs?.[0]) {
+    pageData = result.docs[0];
+  }
+} catch (e) {
+  console.error("Sherlock Trace: CMS connection failed.");
+}
+
+/** * Sherlock Serializer (Logic Layer)
+ * Converts Lexical JSON nodes into HTML strings.
+ */
+function serialize(nodes) {
+  if (!nodes) return "";
+
+  return nodes.map((node) => {
+    if (node.type === 'text') {
+      let text = node.text;
+      if (node.format & 1) text = `<strong>${text}</strong>`; // Bold
+      if (node.format & 2) text = `<em>${text}</em>`;       // Italic
+      return text;
+    }
+
+    if (!node.children) return "";
+
+    const children = serialize(node.children);
+
+    switch (node.type) {
+      case 'h1': return `<h1>${children}</h1>`;
+      case 'h2': return `<h2>${children}</h2>`;
+      case 'h3': return `<h3>${children}</h3>`;
+      case 'list': return node.listType === 'number' ? `<ol>${children}</ol>` : `<ul>${children}</ul>`;
+      case 'listitem': return `<li>${children}</li>`;
+      case 'paragraph': return `<p>${children}</p>`;
+      default: return children;
+    }
+  }).join('');
+}
+
+// Convert the JSON root children to HTML string
+const htmlContent = pageData.content?.root?.children 
+  ? serialize(pageData.content.root.children) 
+  : "Content pending CMS entry...";
+
+const metadata = { title: pageData.title };
+---
+
+<Layout metadata={metadata}>
+  <HeroText 
+    title={pageData.title} 
+    subtitle={pageData.updatedAt ? `Last updated: ${new Date(pageData.updatedAt).toLocaleDateString()}` : ''} 
+  />
+
+  <section class="px-4 py-16 sm:px-6 mx-auto lg:px-8 max-w-4xl">
+    <article class="prose prose-lg dark:prose-invert max-w-none 
+                prose-headings:font-bold prose-headings:text-slate-900 dark:prose-headings:text-slate-100
+                prose-p:text-slate-700 dark:prose-p:text-slate-400">
+      <div set:html={htmlContent} />
+    </article>
+  </section>
+</Layout>

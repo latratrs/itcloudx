@@ -1,0 +1,164 @@
+---
+export const prerender = true;
+
+import Layout from '~/layouts/PageLayout.astro';
+import Hero from '~/components/widgets/Hero.astro';
+
+// 1. SHERLOCK DYNAMIC ROUTING
+export async function getStaticPaths() {
+  try {
+    const response = await fetch('http://127.0.0.1:3000/api/pages?limit=1000');
+    const data = await response.json();
+    
+    return data.docs.map((page) => ({
+      params: { slug: page.slug },
+      props: { pageData: page },
+    }));
+  } catch (error) {
+    console.error("Sherlock Error: Connection to Payload CMS refused.", error);
+    return [];
+  }
+}
+
+const { pageData } = Astro.props;
+let canvasCode = pageData?.canvasCode || '';
+
+// 2. THE SHERLOCK INJECTION (Unbreakable Bridge)
+if (canvasCode) {
+  const hijackScript = `
+    <script>
+      // Hijack 1: Standard Anchors
+      document.addEventListener('click', function(e) {
+        const a = e.target.closest('a');
+        if (a && a.getAttribute('href')?.startsWith('#')) {
+          e.preventDefault();
+          window.parent.postMessage({ type: 'SHERLOCK_SCROLL', targetId: a.getAttribute('href').substring(1) }, '*');
+        }
+      });
+
+      // Hijack 2: element.scrollIntoView()
+      const originalScrollIntoView = Element.prototype.scrollIntoView;
+      Element.prototype.scrollIntoView = function() {
+        if (this.id) {
+          window.parent.postMessage({ type: 'SHERLOCK_SCROLL', targetId: this.id }, '*');
+        } else {
+          try { originalScrollIntoView.apply(this, arguments); } catch(e) {}
+        }
+      };
+
+      // Hijack 3: window.scrollTo(x, y) - Restored for Gemini Buttons
+      window.scrollTo = function(options) {
+        let yPos = typeof options === 'object' ? options.top : arguments[1];
+        if (yPos !== undefined) {
+          window.parent.postMessage({ type: 'SHERLOCK_SCROLL_POS', y: yPos }, '*');
+        }
+      };
+
+      // Theme Mirroring
+      window.addEventListener('message', function(event) {
+        if (event.data.type === 'THEME_CHANGE') {
+          document.documentElement.classList.toggle('dark', event.data.theme === 'dark');
+          document.body.style.backgroundColor = event.data.theme === 'dark' ? '#0f172a' : '#ffffff';
+          document.body.style.color = event.data.theme === 'dark' ? '#f8fafc' : '#0f172a';
+        }
+      });
+    </script>
+  `;
+  canvasCode = canvasCode.includes('</body>') ? canvasCode.replace('</body>', hijackScript + '</body>') : canvasCode + hijackScript;
+}
+
+// Fallback logic for Standard Rich Text Pages
+function serializeLexical(nodes) {
+  if (!nodes) return '';
+  return nodes.map((node) => {
+    if (node.type === 'text') return node.format & 1 ? `<strong>${node.text}</strong>` : node.text;
+    const children = node.children ? serializeLexical(node.children) : '';
+    switch (node.type) {
+      case 'heading': return `<${node.tag} class="text-2xl font-bold mt-6 mb-2 text-purple-700">${children}</${node.tag}>`;
+      case 'paragraph': return `<p class="mb-4 text-lg leading-relaxed">${children}</p>`;
+      default: return children;
+    }
+  }).join('');
+}
+const htmlContent = pageData?.content?.root?.children && !canvasCode ? serializeLexical(pageData.content.root.children) : '';
+---
+
+<Layout metadata={{ title: pageData?.title || 'ITCloudX Hub' }}>
+  {pageData ? (
+    <section class="bg-slate-50 dark:bg-slate-950 min-h-screen">
+      
+      <Hero>
+        <Fragment slot="title">{pageData.title}</Fragment>
+        <Fragment slot="subtitle">
+           {canvasCode ? 'Interactive AI Strategy Hub.' : <div class="text-left" set:html={htmlContent} />}
+        </Fragment>
+      </Hero>
+
+      {canvasCode && (
+        <div class="max-w-7xl mx-auto px-6 pb-20 pt-10">
+           <iframe
+             id="sherlock-sandbox"
+             srcdoc={canvasCode}
+             class="w-full bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl border border-slate-200 dark:border-slate-800 transition-colors duration-300"
+             style="height: 3500px; border: none; overflow: hidden; display: block;"
+             scrolling="no"
+           ></iframe>
+        </div>
+      )}
+
+    </section>
+  ) : (
+    <div class="h-screen flex items-center justify-center font-bold text-purple-600 animate-pulse">
+      Handshaking with Sherlock Brain...
+    </div>
+  )}
+</Layout>
+
+<script is:inline>
+  const iframe = document.getElementById('sherlock-sandbox');
+
+  // THEME SYNC
+  function syncTheme() {
+    const isDark = document.documentElement.classList.contains('dark');
+    iframe?.contentWindow?.postMessage({ type: 'THEME_CHANGE', theme: isDark ? 'dark' : 'light' }, '*');
+  }
+  new MutationObserver(() => syncTheme()).observe(document.documentElement, { attributes: true });
+
+  // THE RESTORED SCROLL LISTENER
+  window.addEventListener('message', (event) => {
+    if (!iframe) return;
+    const iframeTopOnPage = iframe.getBoundingClientRect().top + window.scrollY;
+
+    if (event.data?.type === 'SHERLOCK_SCROLL') {
+      const el = (iframe.contentDocument || iframe.contentWindow.document).getElementById(event.data.targetId);
+      if (el) window.scrollTo({ top: iframeTopOnPage + el.getBoundingClientRect().top - 100, behavior: 'smooth' });
+    }
+
+    if (event.data?.type === 'SHERLOCK_SCROLL_POS') {
+      window.scrollTo({ top: iframeTopOnPage + event.data.y - 100, behavior: 'smooth' });
+    }
+  });
+
+  // PRECISION RESIZER WITH +700px BUFFER
+  function resizeCanvas() {
+    if (!iframe?.contentWindow) return;
+    try {
+      const height = Math.max(
+        iframe.contentWindow.document.body.getBoundingClientRect().height,
+        iframe.contentWindow.document.documentElement.scrollHeight
+      );
+      iframe.style.height = (height + 700) + 'px';
+    } catch (e) {}
+  }
+
+  window.addEventListener('load', () => {
+    iframe?.addEventListener('load', () => {
+      syncTheme();
+      resizeCanvas();
+      [500, 1500, 3000].forEach(d => setTimeout(resizeCanvas, d));
+      new MutationObserver(resizeCanvas).observe(iframe.contentWindow.document.body, { childList: true, subtree: true, attributes: true });
+    });
+  });
+
+  window.addEventListener('resize', resizeCanvas);
+</script>

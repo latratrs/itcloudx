@@ -1,0 +1,14 @@
+kind: "AppHostingYaml"
+schemaVersion: "v1"
+
+# Environment variables for your Node server
+env:
+  - variable: ASTRO_TELEMETRY_DISABLED
+    value: "1"
+  - variable: NODE_VERSION
+    value: "20"
+  - variable: PORT
+    value: "8080"
+  # Ensures Astro can generate canonical links and sitemaps correctly
+  - variable: SITE
+    value: "https://itcloudx-com--itcloudx-com.us-east4.hosted.app"

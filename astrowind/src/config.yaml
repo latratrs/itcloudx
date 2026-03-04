@@ -1,0 +1,73 @@
+site:
+  name: ITCloudX
+  site: 'https://itcloudx.com'
+  base: '/'
+  trailingSlash: false
+
+  # Note: Keep your verification ID if you use Google Search Console
+  googleSiteVerificationId: orcPxI47GSa-cRvY11tUe6iGg2IO_RPvnA1q95iEM3M
+
+# Default SEO metadata for the ITCloudX Team
+metadata:
+  title:
+    default: ITCloudX — AI Integration & IT Solutions
+    template: '%s — ITCloudX'
+  description: "Professional AI integration and IT audit services. Currently working on projects with Magic Castle."
+  robots:
+    index: true
+    follow: true
+  openGraph:
+    site_name: ITCloudX
+    images:
+      - url: '~/assets/images/default.png'
+        width: 1200
+        height: 628
+    type: website
+  twitter:
+    handle: '@itcloudx'
+    site: '@itcloudx'
+    cardType: summary_large_image
+
+i18n:
+  language: en
+  textDirection: ltr
+
+apps:
+  blog:
+    isEnabled: true
+    postsPerPage: 6
+
+    post:
+      isEnabled: true
+      permalink: '/blog/%slug%'
+      robots:
+        index: true
+
+    list:
+      isEnabled: true
+      pathname: 'blog'
+      robots:
+        index: true
+
+    category:
+      isEnabled: true
+      pathname: 'category'
+      robots:
+        index: true
+
+    tag:
+      isEnabled: true
+      pathname: 'tag'
+      robots:
+        index: false
+
+    isRelatedPostsEnabled: true
+    relatedPostsCount: 4
+
+analytics:
+  vendors:
+    googleAnalytics:
+      id: null # Add your G-ID here later for tracking
+
+ui:
+  theme: 'system'

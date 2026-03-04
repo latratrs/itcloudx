@@ -1,0 +1,69 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import Hero from '~/components/widgets/Hero.astro';
+import Features from '~/components/widgets/Features.astro';
+import { getPermalink } from '~/utils/permalinks';
+
+// Sherlock Logic: Safe Fetch to prevent JSON crashes
+let pageData = { title: 'AI Consulting Los Angeles', content: null };
+
+try {
+  const res = await fetch('http://localhost:3000/api/pages?where[slug][equals]=ai-consulting-los-angeles');
+  if (res.ok) {
+    const data = await res.json();
+    pageData = data.docs?.[0] || pageData;
+  }
+} catch (e) {
+  console.error("Sherlock Trace: CMS Offline.");
+}
+
+// Sherlock Serializer: Formats Purple LA and Bold White text
+function serialize(nodes) {
+  if (!nodes) return "";
+  return nodes.map((node) => {
+    if (node.type === 'text') {
+      let t = node.text;
+      if (t.includes("Los Angeles")) {
+        t = t.replace(/Los Angeles/g, `<span class="text-purple-600 dark:text-purple-400 font-black">Los Angeles</span>`);
+      }
+      return (node.format & 1) ? `<strong class="font-extrabold text-slate-900 dark:text-white">${t}</strong>` : t;
+    }
+    if (!node.children) return "";
+    const children = serialize(node.children);
+    switch (node.type) {
+      case 'h2': return `<h2 class="text-3xl font-black uppercase tracking-tighter mt-12 mb-6 border-b-4 border-slate-900 dark:border-white pb-2">${children}</h2>`;
+      case 'paragraph': return `<p class="text-lg leading-relaxed mb-6 text-slate-700 dark:text-slate-300">${children}</p>`;
+      case 'list': return `<ul class="list-disc ml-6 mb-8 space-y-2 text-slate-700 dark:text-slate-300">${children}</ul>`;
+      case 'listitem': return `<li class="pl-2">${children}</li>`;
+      case 'link': return `<a href="${node.fields?.url || '#'}" class="text-purple-600 underline font-bold" ${node.fields?.newTab ? 'target="_blank"' : ''}>${children}</a>`;
+      default: return children;
+    }
+  }).join('');
+}
+
+const htmlContent = pageData.content?.root?.children ? serialize(pageData.content.root.children) : "Loading ITCloudX Data...";
+---
+
+<Layout metadata={{ title: `${pageData.title} | ITCloudX` }}>
+  <Hero
+    actions={[{ variant: 'primary', text: 'Get Free AI Audit', href: getPermalink('/contact') }]}
+    image={{ src: 'https://images.unsplash.com/photo-1677442136019-21780ecad995', alt: 'AI Consulting' }}
+  >
+    <Fragment slot="title">AI Solutions for <span class="text-purple-600 dark:text-purple-400">Los Angeles</span> Small Businesses</Fragment>
+    <Fragment slot="subtitle">Hyper-local automation for Burbank, Thousand Oaks, and Agoura Hills.</Fragment>
+  </Hero>
+
+  <section class="px-4 py-16 mx-auto max-w-4xl">
+    <article class="prose prose-lg dark:prose-invert max-w-none">
+      <div set:html={htmlContent} />
+    </article>
+  </section>
+
+  <Features
+    title="Localized Expertise"
+    items={[
+      { title: 'San Fernando Valley', description: 'Burbank and North Hollywood workflows.', icon: 'tabler:map-pin' },
+      { title: 'General Contractors', description: 'Streamlined project auditing.', icon: 'tabler:tools' },
+    ]}
+  />
+</Layout>

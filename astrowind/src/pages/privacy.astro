@@ -1,0 +1,59 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+
+// Sherlock Logic: Dynamic Content Fetching for Privacy Page
+let pageData = { title: 'Privacy Policy', content: null, updatedAt: null };
+
+try {
+  const response = await fetch('http://localhost:3000/api/pages?where[slug][equals]=privacy');
+  const result = await response.json();
+  if (result.docs?.[0]) {
+    pageData = result.docs[0];
+  }
+} catch (e) {
+  console.error("Sherlock Trace: CMS connection failed for Privacy audit.");
+}
+
+/** * Lexical Serializer Logic
+ */
+function serialize(nodes) {
+  if (!nodes) return "";
+  return nodes.map((node) => {
+    if (node.type === 'text') {
+      let text = node.text;
+      if (node.format & 1) text = `<strong>${text}</strong>`;
+      return text;
+    }
+    if (!node.children) return "";
+    const children = serialize(node.children);
+    switch (node.type) {
+      case 'h1': return `<h1>${children}</h1>`;
+      case 'h2': return `<h2>${children}</h2>`;
+      case 'paragraph': return `<p>${children}</p>`;
+      case 'list': return `<ul>${children}</ul>`;
+      case 'listitem': return `<li>${children}</li>`;
+      default: return children;
+    }
+  }).join('');
+}
+
+const htmlContent = pageData.content?.root?.children 
+  ? serialize(pageData.content.root.children) 
+  : "Privacy Policy pending CMS entry...";
+
+const metadata = { title: pageData.title };
+---
+
+<Layout metadata={metadata}>
+  <HeroText 
+    title={pageData.title} 
+    subtitle={pageData.updatedAt ? `Last updated: ${new Date(pageData.updatedAt).toLocaleDateString()}` : ''} 
+  />
+
+  <section class="px-4 py-16 sm:px-6 mx-auto lg:px-8 max-w-4xl">
+    <article class="prose prose-lg dark:prose-invert max-w-none">
+      <div set:html={htmlContent} />
+    </article>
+  </section>
+</Layout>

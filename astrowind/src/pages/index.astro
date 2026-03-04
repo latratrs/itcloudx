@@ -1,0 +1,89 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import Hero from '~/components/widgets/Hero.astro';
+import Features from '~/components/widgets/Features.astro';
+import { getPermalink } from '~/utils/permalinks';
+
+// Sherlock Logic: Fetching dynamic content from the Payload CMS Brain
+let content = {};
+try {
+  const response = await fetch('http://localhost:3000/api/pages?where[slug][equals]=home');
+  const data = await response.json();
+  content = data.docs?.[0] || {};
+} catch (error) {
+  console.error("Sherlock Trace: CMS connection failed. Using local fallbacks.");
+}
+
+const metadata = { 
+  title: content.title || 'ITCloudX | AI Integration & IT Solutions' 
+};
+---
+
+<Layout metadata={metadata}>
+  <Hero
+    actions={[
+      {
+        variant: 'primary',
+        text: 'Get Free AI Audit',
+        href: getPermalink('/contact'),
+        icon: 'tabler:chart-bar',
+      },
+      { 
+        text: 'Learn more', 
+        href: '#solutions' 
+      },
+    ]}
+    image={{ 
+      src: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=2070&q=80', 
+      alt: 'ITCloudX AI Integration' 
+    }}
+  >
+    <Fragment slot="title">
+      <span set:html={content.hero?.title || 'Scale Your Business with AI'} />
+    </Fragment>
+    
+    <Fragment slot="subtitle">
+      <span set:html={content.hero?.subtitle || 'Automate manual workflows with the proprietary Baker Street Mesh audit system.'} />
+    </Fragment>
+  </Hero>
+
+  {content.solutions && content.solutions.length > 0 && (
+    <Features
+      id="solutions"
+      tagline="Solutions"
+      title="AI Workforce Built for Growth"
+      subtitle="Stop juggling manual tasks. We deploy automated AI layers specifically for Los Angeles SMBs."
+      items={content.solutions.map((s) => ({
+        title: s.title,
+        description: s.description,
+        icon: s.icon || 'tabler:check',
+      }))}
+    />
+  )}
+
+  {!content.solutions && (
+    <Features
+      id="solutions"
+      tagline="Our Expertise"
+      title="Precision AI Auditing"
+      subtitle="Leveraging the Quadruple Cross Check Шерлок (v2026.2) for 100% data veracity."
+      items={[
+        {
+          title: 'Legal & Audit Automation',
+          description: 'Detect trace inconsistencies in contracts and data fragments using Sherlock Vision OCR.',
+          icon: 'tabler:shield-check',
+        },
+        {
+          title: 'Market Probability Mapping',
+          description: 'Calculate growth opportunities with Python-backed probability rankings and logic guards.',
+          icon: 'tabler:trending-up',
+        },
+        {
+          title: 'Custom Brand Kits',
+          description: 'Force AI models to speak in your unique brand voice across all offsite discovery channels.',
+          icon: 'tabler:brand-tabler',
+        },
+      ]}
+    />
+  )}
+</Layout>

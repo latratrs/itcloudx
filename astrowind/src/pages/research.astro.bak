@@ -1,0 +1,38 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import Hero from '~/components/widgets/Hero.astro';
+import Features2 from '~/components/widgets/Features2.astro';
+
+let items = [];
+try {
+  const response = await fetch('http://localhost:3000/api/research-hub?limit=100');
+  const data = await response.json();
+  const researchEntries = data.docs || [];
+
+  items = researchEntries.map((entry) => ({
+    title: entry.title,
+    description: entry.summary,
+    icon: 'tabler:book',
+    callToAction: {
+      text: 'View Full Research',
+      // SEO FIX: Link to slug instead of ID
+      href: `/research/${entry.slug || entry.id}`,
+    },
+  }));
+} catch (error) {
+  console.error("Sherlock Error:", error);
+}
+
+const metadata = { title: 'Research Hub | itcloudx' };
+---
+
+<Layout metadata={metadata}>
+  <Hero
+    actions={[{ variant: 'primary', text: 'Explore Insights', href: '#content' }]}
+    image={{ src: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=2072&q=80', alt: 'Global Research' }}
+  >
+    <Fragment slot="title">The <span class="text-accent highlight">itcloudx</span> Research Hub</Fragment>
+  </Hero>
+
+  <Features2 id="content" title="Knowledge Bases" items={items} />
+</Layout>

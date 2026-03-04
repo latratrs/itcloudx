@@ -1,0 +1,109 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import Content from '~/components/widgets/Content.astro';
+import Features3 from '~/components/widgets/Features3.astro';
+import Steps from '~/components/widgets/Steps.astro';
+
+const { slug } = Astro.params;
+
+const response = await fetch(`http://localhost:3000/api/research-hub?where[slug][equals]=${slug}`);
+const data = await response.json();
+const entry = data.docs?.[0];
+
+if (!entry) return Astro.redirect('/404');
+
+const metadata = { title: `${entry.title} | itcloudx Research Hub` };
+
+// Helper to convert standard YouTube links to Embed links
+const getEmbedUrl = (url) => {
+  if (url.includes('youtube.com/watch?v=')) return url.replace('watch?v=', 'embed/');
+  if (url.includes('youtu.be/')) return url.replace('youtu.be/', 'youtube.com/embed/');
+  return url;
+};
+---
+
+<Layout metadata={metadata}>
+  <section class="py-16 sm:py-20 text-center">
+    <div class="max-w-7xl mx-auto px-4">
+      <h1 class="text-5xl md:text-6xl font-bold mb-4 font-heading">{entry.title}</h1>
+      <p class="text-xl text-muted">{entry.summary}</p>
+    </div>
+  </section>
+
+  {entry.videoUrl && (
+    <section class="max-w-4xl mx-auto px-4 py-12">
+      <div class="aspect-w-16 aspect-h-9 rounded-xl overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800">
+        <iframe 
+          src={getEmbedUrl(entry.videoUrl)} 
+          class="w-full h-[450px]" 
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+          allowfullscreen>
+        </iframe>
+      </div>
+    </section>
+  )}
+
+  {entry.quiz && entry.quiz.length > 0 && (
+    <Steps
+      title="Knowledge Check"
+      subtitle="Test your understanding of this research module."
+      items={entry.quiz.map((q, index) => ({
+        title: `Question ${index + 1}: ${q.question}`,
+        description: q.correctAnswer,
+        icon: 'tabler:help',
+      }))}
+    />
+  )}
+
+  {entry.tableData && entry.tableData.length > 0 && (
+    <section class="max-w-6xl mx-auto px-4 py-12">
+      <div class="overflow-x-auto shadow-xl rounded-xl border border-gray-200 bg-white dark:bg-slate-900">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-slate-100 dark:bg-slate-800 uppercase text-sm font-bold">
+            <tr>
+              <th class="p-4 border-b dark:border-slate-700">Category</th>
+              <th class="p-4 border-b dark:border-slate-700">Metric</th>
+              <th class="p-4 border-b dark:border-slate-700">Value</th>
+              <th class="p-4 border-b dark:border-slate-700">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entry.tableData.map((row) => (
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b dark:border-slate-700">
+                <td class="p-4 font-medium">{row.col1}</td>
+                <td class="p-4">{row.col2}</td>
+                <td class="p-4 text-accent font-bold">{row.col3}</td>
+                <td class="p-4 text-sm text-muted">{row.col4}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )}
+
+  {entry.audioUrl && (
+    <Content isReversed title="Audio Overview">
+      <Fragment slot="content">
+        <audio controls class="w-full mt-4"><source src={entry.audioUrl} type="audio/mpeg" /></audio>
+      </Fragment>
+    </Content>
+  )}
+
+  {entry.mindMap && (
+    <section class="py-12 bg-white dark:bg-slate-900">
+      <div class="max-w-5xl mx-auto px-4">
+        <h2 class="text-3xl font-bold mb-8 text-center">Knowledge Architecture</h2>
+        <div class="mermaid flex justify-center p-8 bg-slate-50 dark:bg-slate-800 rounded-xl">{entry.mindMap}</div>
+      </div>
+    </section>
+  )}
+
+  <Features3
+    title="Key Concepts"
+    items={entry.flashcards?.map((c) => ({ title: c.question, description: c.answer, icon: 'tabler:bulb' }))}
+  />
+
+  <script is:inline src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script is:inline>mermaid.initialize({ startOnLoad: true, theme: 'forest' });</script>
+</Layout>

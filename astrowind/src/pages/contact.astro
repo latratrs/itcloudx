@@ -1,0 +1,62 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import ContactUs from '~/components/widgets/Contact.astro';
+import Features2 from '~/components/widgets/Features2.astro';
+
+// Sherlock Logic: Branded itcloudx0 Calendar Link
+const BOOKING_URL = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ2SQsxPh728ktuzEnrQ1jy8bAXrrZNwprTNUMz2sxFxw-5rwZ4dj2ekqMt72U840Dvpx-a5r5Z1';
+
+const metadata = {
+  title: 'Contact | ITCloudX',
+};
+---
+
+<Layout metadata={metadata}>
+  <HeroText 
+    tag="Contact" 
+    title="Let's Connect" 
+    subtitle="Reach out to explore our AI development solutions. Have a great business concept? Let's partner to bring it to market."
+  />
+
+  <section class="max-w-3xl mx-auto px-4 sm:px-6 mb-12">
+    <div class="p-8 rounded-2xl border-4 border-purple-600 dark:border-purple-400 bg-slate-50 dark:bg-slate-800 text-center shadow-2xl">
+      <h2 class="text-3xl font-black uppercase mb-4 text-slate-900 dark:text-white">Ready to scale?</h2>
+      <p class="text-lg mb-8 text-muted dark:text-slate-300">
+        Skip the manual process. Schedule a direct <strong class="text-purple-600 dark:text-purple-400">AI Consultation</strong> with Yuriy to review your project.
+      </p>
+      
+      <a 
+        href={BOOKING_URL} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        class="inline-flex items-center justify-center px-10 py-5 text-2xl font-black text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-all shadow-xl hover:scale-105 active:scale-95"
+      >
+        📅 BOOK A CALL
+      </a>
+      
+      <p class="text-sm mt-4 text-slate-500 italic">Opens in a new window</p>
+    </div>
+  </section>
+
+  <ContactUs
+    id="form"
+    title="General Inquiries"
+    subtitle="Prefer to start with a message? Tell us about your goals below."
+    inputs={[
+      { type: 'text', name: 'name', label: 'Full Name' },
+      { type: 'email', name: 'email', label: 'Business Email' },
+    ]}
+    textarea={{ label: 'Describe your concept or AI requirements' }}
+    button="Send Inquiry"
+  />
+
+  <Features2
+    title="Direct Communication"
+    items={[
+      { title: 'Email', description: 'itcloudx0@gmail.com', icon: 'tabler:mail' },
+      { title: 'Location', description: 'Los Angeles, CA', icon: 'tabler:map-pin' },
+      { title: 'Partnerships', description: 'Open for Collaboration', icon: 'tabler:bulb' },
+    ]}
+  />
+</Layout>

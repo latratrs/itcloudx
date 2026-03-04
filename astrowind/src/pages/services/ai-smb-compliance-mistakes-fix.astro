@@ -1,0 +1,146 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import Hero from '~/components/widgets/Hero.astro';
+
+// 1. SHERLOCK FETCH
+const response = await fetch('http://127.0.0.1:3000/api/pages?where[slug][equals]=ai-smb-compliance-mistakes-fix');
+const rawData = await response.json();
+const pageData = rawData.docs?.[0];
+
+let canvasCode = pageData?.canvasCode || '';
+
+// 2. THE SHERLOCK INJECTION (Server-Side - Fully Restored)
+if (canvasCode) {
+  const hijackScript = `
+    <script>
+      // Hijack 1: Standard <a href="#id"> links
+      document.addEventListener('click', function(e) {
+        const a = e.target.closest('a');
+        if (a && a.getAttribute('href') && a.getAttribute('href').startsWith('#')) {
+          e.preventDefault();
+          window.parent.postMessage({ type: 'SHERLOCK_SCROLL', targetId: a.getAttribute('href').substring(1) }, '*');
+        }
+      });
+
+      // Hijack 2: element.scrollIntoView() 
+      const originalScrollIntoView = Element.prototype.scrollIntoView;
+      Element.prototype.scrollIntoView = function() {
+        if (this.id) {
+          window.parent.postMessage({ type: 'SHERLOCK_SCROLL', targetId: this.id }, '*');
+        } else {
+          try { originalScrollIntoView.apply(this, arguments); } catch(e) {}
+        }
+      };
+
+      // Hijack 3: window.scrollTo(x, y) - THE MISSING PIECE RESTORED
+      window.scrollTo = function(options) {
+        let yPos = typeof options === 'object' ? options.top : arguments[1];
+        if (yPos !== undefined) {
+          window.parent.postMessage({ type: 'SHERLOCK_SCROLL_POS', y: yPos }, '*');
+        }
+      };
+
+      // Theme Mirroring
+      window.addEventListener('message', function(event) {
+        if (event.data.type === 'THEME_CHANGE') {
+          document.documentElement.classList.toggle('dark', event.data.theme === 'dark');
+          document.body.style.backgroundColor = event.data.theme === 'dark' ? '#0f172a' : '#ffffff';
+          document.body.style.color = event.data.theme === 'dark' ? '#f8fafc' : '#0f172a';
+        }
+      });
+    </script>
+  `;
+  canvasCode = canvasCode.includes('</body>') ? canvasCode.replace('</body>', hijackScript + '</body>') : canvasCode + hijackScript;
+}
+---
+
+<Layout metadata={{ title: pageData?.title || 'AI Compliance Audit' }}>
+  {pageData ? (
+    <section class="bg-slate-50 dark:bg-slate-950 min-h-screen">
+      
+      <Hero>
+        <Fragment slot="title">{pageData.title}</Fragment>
+        <Fragment slot="subtitle">Interactive AI Strategy Hub.</Fragment>
+      </Hero>
+
+      {canvasCode && (
+        <div class="max-w-7xl mx-auto px-6 pb-20">
+           <iframe
+             id="sherlock-sandbox"
+             srcdoc={canvasCode}
+             class="w-full bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl border border-slate-200 dark:border-slate-800 transition-colors duration-300"
+             style="height: 3500px; border: none; overflow: hidden; display: block;"
+             scrolling="no"
+           ></iframe>
+        </div>
+      )}
+
+    </section>
+  ) : "Handshaking..."}
+</Layout>
+
+<script is:inline>
+  const iframe = document.getElementById('sherlock-sandbox');
+
+  // THEME SYNC
+  function syncTheme() {
+    const isDark = document.documentElement.classList.contains('dark');
+    iframe?.contentWindow?.postMessage({ type: 'THEME_CHANGE', theme: isDark ? 'dark' : 'light' }, '*');
+  }
+  const observer = new MutationObserver(() => syncTheme());
+  observer.observe(document.documentElement, { attributes: true });
+
+  // THE RESTORED SCROLL LISTENER
+  window.addEventListener('message', (event) => {
+    if (!iframe) return;
+
+    const iframeRect = iframe.getBoundingClientRect();
+    const iframeTopOnPage = iframeRect.top + window.scrollY;
+
+    // Handle jump to specific ID
+    if (event.data?.type === 'SHERLOCK_SCROLL') {
+      const targetId = event.data.targetId;
+      const childDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const targetElement = childDoc.getElementById(targetId);
+      
+      if (targetElement) {
+        const offsetInIframe = targetElement.getBoundingClientRect().top;
+        window.scrollTo({ top: iframeTopOnPage + offsetInIframe - 100, behavior: 'smooth' });
+      }
+    }
+
+    // Handle jump to specific Y coordinate - THE MISSING PIECE RESTORED
+    if (event.data?.type === 'SHERLOCK_SCROLL_POS') {
+      const yOffset = event.data.y;
+      window.scrollTo({ top: iframeTopOnPage + yOffset - 100, behavior: 'smooth' });
+    }
+  });
+
+  // PRECISION RESIZER WITH +700px BUFFER
+  function resizeCanvas() {
+    if (!iframe?.contentWindow) return;
+    try {
+      const childBody = iframe.contentWindow.document.body;
+      const childHtml = iframe.contentWindow.document.documentElement;
+      
+      const boundingHeight = childBody.getBoundingClientRect().height;
+      const scrollHeight = childHtml.scrollHeight;
+      
+      const finalHeight = Math.max(boundingHeight, scrollHeight);
+      iframe.style.height = (finalHeight + 700) + 'px';
+    } catch (e) {}
+  }
+
+  window.addEventListener('load', () => {
+    iframe?.addEventListener('load', () => {
+      syncTheme();
+      resizeCanvas();
+      [500, 1500, 3000, 6000].forEach(d => setTimeout(resizeCanvas, d));
+      
+      const contentObserver = new MutationObserver(resizeCanvas);
+      contentObserver.observe(iframe.contentWindow.document.body, { childList: true, subtree: true, attributes: true });
+    });
+  });
+
+  window.addEventListener('resize', resizeCanvas);
+</script>
