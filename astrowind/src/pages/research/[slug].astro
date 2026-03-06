@@ -1,4 +1,5 @@
 ---
+import { fetchWithCache } from '~/utils/cache';
 import Layout from '~/layouts/PageLayout.astro';
 import Content from '~/components/widgets/Content.astro';
 import Features3 from '~/components/widgets/Features3.astro';
@@ -6,8 +7,7 @@ import Steps from '~/components/widgets/Steps.astro';
 
 const { slug } = Astro.params;
 
-const response = await fetch(`http://localhost:3000/api/research-hub?where[slug][equals]=${slug}`);
-const data = await response.json();
+const data = await fetchWithCache(`http://localhost:3000/api/research-hub?where[slug][equals]=${slug}`);
 const entry = data.docs?.[0];
 
 if (!entry) return Astro.redirect('/404');

@@ -2,13 +2,13 @@
 export const prerender = false;
 import Layout from '~/layouts/PageLayout.astro';
 import Hero from '~/components/widgets/Hero.astro';
+import { fetchWithCache } from '~/utils/cache';
 
 const { slug } = Astro.params;
 
 let pageData = null;
 try {
-  const response = await fetch(`http://127.0.0.1:3000/api/pages?where[slug][equals]=${slug}&limit=1`);
-  const data = await response.json();
+  const data = await fetchWithCache(`http://127.0.0.1:3000/api/pages?where[slug][equals]=${slug}&limit=1`);
   pageData = data.docs?.[0] || null;
 } catch (error) {
   console.error("Error fetching page:", error);

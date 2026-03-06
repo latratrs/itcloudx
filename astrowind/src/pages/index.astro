@@ -1,4 +1,5 @@
 ---
+import { fetchWithCache } from '~/utils/cache';
 import Layout from '~/layouts/PageLayout.astro';
 import Hero from '~/components/widgets/Hero.astro';
 import Features from '~/components/widgets/Features.astro';
@@ -7,8 +8,7 @@ import { getPermalink } from '~/utils/permalinks';
 // Sherlock Logic: Fetching dynamic content from the Payload CMS Brain
 let content = {};
 try {
-  const response = await fetch('http://localhost:3000/api/pages?where[slug][equals]=home');
-  const data = await response.json();
+  const data = await fetchWithCache('http://localhost:3000/api/pages?where[slug][equals]=home');
   content = data.docs?.[0] || {};
 } catch (error) {
   console.error("Sherlock Trace: CMS connection failed. Using local fallbacks.");
