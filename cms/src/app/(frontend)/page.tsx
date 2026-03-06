@@ -1,19 +1,47 @@
-import { headers as getHeaders } from 'next/headers.js'
-import Image from 'next/image'
-import { getPayload } from 'payload'
-import React from 'react'
-import { fileURLToPath } from 'url'
+import { headers as getHeaders } from 'next/headers.js';
+import Image from 'next/image';
+import { getPayload } from 'payload';
+import React from 'react';
+import { fileURLToPath } from 'url';
 
-import config from '@/payload.config'
-import './styles.css'
+import config from '@/payload.config';
+import './styles.css';
 
 export default async function HomePage() {
-  const headers = await getHeaders()
-  const payloadConfig = await config
-  const payload = await getPayload({ config: payloadConfig })
-  const { user } = await payload.auth({ headers })
+  console.log('[HomePage] DATABASE_URI from env:', process.env.DATABASE_URI);
+  console.log('[HomePage] NODE_ENV:', process.env.NODE_ENV);
 
-  const fileURL = `vscode://file/${fileURLToPath(import.meta.url)}`
+  const headers = await getHeaders();
+  const payloadConfig = await config;
+
+  let payload;
+  let user = null;
+
+  try {
+    console.log('[HomePage] Attempting to initialize Payload...');
+    payload = await getPayload({ config: payloadConfig });
+    console.log('[HomePage] Payload initialized successfully');
+    const authResult = await payload.auth({ headers });
+    user = authResult.user;
+    console.log('[HomePage] Auth user:', user ? user.email : 'none');
+  } catch (err: any) {
+    console.error('[HomePage] Payload initialization failed:', {
+      message: err.message,
+      stack: err.stack,
+      cause: err.cause,
+    });
+    // Return error UI so preview doesn't hang forever
+    return (
+      <div style={{ padding: '2rem', color: 'red', fontFamily: 'sans-serif' }}>
+        <h1>Error Loading Home Page</h1>
+        <p>{err.message || 'Unknown error during Payload initialization'}</p>
+        <p>Check the terminal logs for detailed stack trace.</p>
+        <p>Most common cause: MongoDB connection failure. Verify DATABASE_URI in .env.</p>
+      </div>
+    );
+  }
+
+  const fileURL = `vscode://file/${fileURLToPath(import.meta.url)}`;
 
   return (
     <div className="home">
@@ -55,5 +83,5 @@ export default async function HomePage() {
         </a>
       </div>
     </div>
-  )
+  );
 }

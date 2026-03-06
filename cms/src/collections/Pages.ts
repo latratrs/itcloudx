@@ -1,9 +1,7 @@
 import { CollectionConfig } from 'payload';
-
 export const Pages: CollectionConfig = {
   slug: 'pages',
   admin: {
-    // Uses the internal page name for the list view title
     useAsTitle: 'pageName',
     defaultColumns: ['pageName', 'title', 'slug', 'updatedAt'],
   },
@@ -32,7 +30,6 @@ export const Pages: CollectionConfig = {
       required: true,
       unique: true,
       label: 'URL Slug',
-      // Removed sidebar positioning to keep it in the main flow above the code editor
       hooks: {
         beforeValidate: [
           ({ value, data }) => {
@@ -48,14 +45,20 @@ export const Pages: CollectionConfig = {
       },
     },
     {
+      name: 'summary',
+      type: 'textarea',
+      label: 'SEO Summary (Meta Description)',
+      admin: {
+        description: 'Short description for Google search results. Keep under 160 characters.',
+      },
+    },
+    {
       name: 'canvasCode',
       type: 'code',
       label: 'Sherlock Canvas Code (HTML/Tailwind)',
       admin: {
         language: 'html',
-        // Sets a larger initial height for the code editor window
         editorOptions: {
-          // Monaco editor options
           automaticLayout: true,
         },
       },

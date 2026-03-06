@@ -127,6 +127,10 @@ export interface Page {
   pageName: string;
   title: string;
   slug: string;
+  /**
+   * Short description for Google search results. Keep under 160 characters.
+   */
+  summary?: string | null;
   canvasCode?: string | null;
   content?: {
     root: {
@@ -253,6 +257,7 @@ export interface PagesSelect<T extends boolean = true> {
   pageName?: T;
   title?: T;
   slug?: T;
+  summary?: T;
   canvasCode?: T;
   content?: T;
   updatedAt?: T;

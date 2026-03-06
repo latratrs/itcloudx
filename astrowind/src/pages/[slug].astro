@@ -1,33 +1,60 @@
 ---
-export const prerender = true;
-
+export const prerender = false;
 import Layout from '~/layouts/PageLayout.astro';
 import Hero from '~/components/widgets/Hero.astro';
 
-// 1. SHERLOCK DYNAMIC ROUTING
-export async function getStaticPaths() {
-  try {
-    const response = await fetch('http://127.0.0.1:3000/api/pages?limit=1000');
-    const data = await response.json();
-    
-    return data.docs.map((page) => ({
-      params: { slug: page.slug },
-      props: { pageData: page },
-    }));
-  } catch (error) {
-    console.error("Sherlock Error: Connection to Payload CMS refused.", error);
-    return [];
-  }
+const { slug } = Astro.params;
+
+let pageData = null;
+try {
+  const response = await fetch(`http://127.0.0.1:3000/api/pages?where[slug][equals]=${slug}&limit=1`);
+  const data = await response.json();
+  pageData = data.docs?.[0] || null;
+} catch (error) {
+  console.error("Error fetching page:", error);
 }
 
-const { pageData } = Astro.props;
+if (!pageData) return Astro.redirect('/404');
+
 let canvasCode = pageData?.canvasCode || '';
 
-// 2. THE SHERLOCK INJECTION (Unbreakable Bridge)
+const canonicalUrl = `https://itcloudx.com/${slug}`;
+
+const metadata = {
+  title: `${pageData.title} | ITCloudX`,
+  description: pageData.summary || `${pageData.title} - ITCloudX AI Services`,
+  canonical: canonicalUrl,
+  openGraph: {
+    type: 'article',
+    title: pageData.title,
+    description: pageData.summary || `${pageData.title} - ITCloudX AI Services`,
+    url: canonicalUrl,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: pageData.title,
+    description: pageData.summary || `${pageData.title} - ITCloudX AI Services`,
+  },
+};
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "headline": pageData.title,
+  "description": pageData.summary || '',
+  "url": canonicalUrl,
+  "publisher": {
+    "@type": "Organization",
+    "name": "ITCloudX",
+    "url": "https://itcloudx.com",
+  },
+  "dateModified": pageData.updatedAt || '',
+  "datePublished": pageData.createdAt || '',
+};
+
 if (canvasCode) {
   const hijackScript = `
     <script>
-      // Hijack 1: Standard Anchors
       document.addEventListener('click', function(e) {
         const a = e.target.closest('a');
         if (a && a.getAttribute('href')?.startsWith('#')) {
@@ -35,8 +62,6 @@ if (canvasCode) {
           window.parent.postMessage({ type: 'SHERLOCK_SCROLL', targetId: a.getAttribute('href').substring(1) }, '*');
         }
       });
-
-      // Hijack 2: element.scrollIntoView()
       const originalScrollIntoView = Element.prototype.scrollIntoView;
       Element.prototype.scrollIntoView = function() {
         if (this.id) {
@@ -45,16 +70,12 @@ if (canvasCode) {
           try { originalScrollIntoView.apply(this, arguments); } catch(e) {}
         }
       };
-
-      // Hijack 3: window.scrollTo(x, y) - Restored for Gemini Buttons
       window.scrollTo = function(options) {
         let yPos = typeof options === 'object' ? options.top : arguments[1];
         if (yPos !== undefined) {
           window.parent.postMessage({ type: 'SHERLOCK_SCROLL_POS', y: yPos }, '*');
         }
       };
-
-      // Theme Mirroring
       window.addEventListener('message', function(event) {
         if (event.data.type === 'THEME_CHANGE') {
           document.documentElement.classList.toggle('dark', event.data.theme === 'dark');
@@ -67,7 +88,6 @@ if (canvasCode) {
   canvasCode = canvasCode.includes('</body>') ? canvasCode.replace('</body>', hijackScript + '</body>') : canvasCode + hijackScript;
 }
 
-// Fallback logic for Standard Rich Text Pages
 function serializeLexical(nodes) {
   if (!nodes) return '';
   return nodes.map((node) => {
@@ -80,66 +100,60 @@ function serializeLexical(nodes) {
     }
   }).join('');
 }
-const htmlContent = pageData?.content?.root?.children && !canvasCode ? serializeLexical(pageData.content.root.children) : '';
+
+const htmlContent = pageData?.content?.root?.children ? serializeLexical(pageData.content.root.children) : '';
 ---
 
-<Layout metadata={{ title: pageData?.title || 'ITCloudX Hub' }}>
-  {pageData ? (
-    <section class="bg-slate-50 dark:bg-slate-950 min-h-screen">
-      
-      <Hero>
-        <Fragment slot="title">{pageData.title}</Fragment>
-        <Fragment slot="subtitle">
-           {canvasCode ? 'Interactive AI Strategy Hub.' : <div class="text-left" set:html={htmlContent} />}
-        </Fragment>
-      </Hero>
+<Layout metadata={metadata}>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(structuredData)} />
 
-      {canvasCode && (
-        <div class="max-w-7xl mx-auto px-6 pb-20 pt-10">
-           <iframe
-             id="sherlock-sandbox"
-             srcdoc={canvasCode}
-             class="w-full bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl border border-slate-200 dark:border-slate-800 transition-colors duration-300"
-             style="height: 3500px; border: none; overflow: hidden; display: block;"
-             scrolling="no"
-           ></iframe>
-        </div>
-      )}
+  <section class="bg-slate-50 dark:bg-slate-950 min-h-screen">
+    <Hero>
+      <Fragment slot="title">{pageData.title}</Fragment>
+      <Fragment slot="subtitle">
+        {canvasCode ? 'Interactive AI Strategy Hub.' : <div class="text-left" set:html={htmlContent} />}
+      </Fragment>
+    </Hero>
 
-    </section>
-  ) : (
-    <div class="h-screen flex items-center justify-center font-bold text-purple-600 animate-pulse">
-      Handshaking with Sherlock Brain...
-    </div>
-  )}
+    {htmlContent && canvasCode && (
+      <div class="sr-only" set:html={htmlContent} />
+    )}
+
+    {canvasCode && (
+      <div class="max-w-7xl mx-auto px-6 pb-20 pt-10">
+        <iframe
+          id="sherlock-sandbox"
+          srcdoc={canvasCode}
+          class="w-full bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl border border-slate-200 dark:border-slate-800 transition-colors duration-300"
+          style="height: 3500px; border: none; overflow: hidden; display: block;"
+          scrolling="no"
+        ></iframe>
+      </div>
+    )}
+  </section>
 </Layout>
 
 <script is:inline>
   const iframe = document.getElementById('sherlock-sandbox');
 
-  // THEME SYNC
   function syncTheme() {
     const isDark = document.documentElement.classList.contains('dark');
     iframe?.contentWindow?.postMessage({ type: 'THEME_CHANGE', theme: isDark ? 'dark' : 'light' }, '*');
   }
   new MutationObserver(() => syncTheme()).observe(document.documentElement, { attributes: true });
 
-  // THE RESTORED SCROLL LISTENER
   window.addEventListener('message', (event) => {
     if (!iframe) return;
     const iframeTopOnPage = iframe.getBoundingClientRect().top + window.scrollY;
-
     if (event.data?.type === 'SHERLOCK_SCROLL') {
       const el = (iframe.contentDocument || iframe.contentWindow.document).getElementById(event.data.targetId);
       if (el) window.scrollTo({ top: iframeTopOnPage + el.getBoundingClientRect().top - 100, behavior: 'smooth' });
     }
-
     if (event.data?.type === 'SHERLOCK_SCROLL_POS') {
       window.scrollTo({ top: iframeTopOnPage + event.data.y - 100, behavior: 'smooth' });
     }
   });
 
-  // PRECISION RESIZER WITH +700px BUFFER
   function resizeCanvas() {
     if (!iframe?.contentWindow) return;
     try {

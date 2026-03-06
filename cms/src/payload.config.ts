@@ -1,10 +1,10 @@
 import { buildConfig } from 'payload';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { mongooseAdapter } from '@payloadcms/db-mongodb'; 
+import { mongooseAdapter } from '@payloadcms/db-mongodb';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 
-// --- SHERLOCK IMPORTS ---
+// Your collections and globals
 import { Pages } from './collections/Pages';
 import { Users } from './collections/Users';
 import { Header } from './globals/Header';
@@ -14,29 +14,36 @@ const dirname = path.dirname(filename);
 
 export default buildConfig({
   admin: {
-    // Points to the 'users' slug in your Users.ts
-    user: Users.slug, 
+    user: Users.slug,
     autoLogin: process.env.NODE_ENV === 'development' ? {
       email: 'dev@itcloudx.com',
       password: 'test',
       prefillOnly: true,
     } : false,
   },
+
   collections: [
     Pages,
     Users,
   ],
+
   globals: [
     Header,
   ],
+
   editor: lexicalEditor({}),
-  // Bedrock of Truth: Verified secret from your verified .env
+
   secret: process.env.PAYLOAD_SECRET || 'SHERLOCK_SECRET_2026',
+
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
+
   db: mongooseAdapter({
-    // Direct link to your verified Atlas Cluster0 URI
-    url: process.env.DATABASE_URI || '',
+    // Primary: Firebase Studio built-in local MongoDB (Unix socket)
+    url: process.env.DATABASE_URI || 'mongodb://%2Ftmp%2Fmongodb%2Fmongodb.sock/itcloudx?directConnection=true&serverSelectionTimeoutMS=15000&connectTimeoutMS=15000',
+
+    // Alternative fallback: your Atlas cluster (uncomment if you prefer cloud)
+    // url: process.env.DATABASE_URI || 'mongodb+srv://yuriy_admin:6OfppGyrwBFDE56R@cluster0.r7l4onf.mongodb.net/itcloudx?retryWrites=true&w=majority',
   }),
 });

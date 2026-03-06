@@ -19,6 +19,7 @@ const astrowind = (await import(/* @vite-ignore */ vendorPath)).default;
 
 export default defineConfig({
   output: 'server',
+  site: 'https://itcloudx.com',
   adapter: node({ mode: 'standalone' }),
 
   server: {
@@ -29,7 +30,7 @@ export default defineConfig({
 
   integrations: [
     tailwind({ applyBaseStyles: false }),
-    sitemap(),
+    sitemap({ customPages: ['https://itcloudx.com/'] }),
     mdx(),
     icon(),
     partytown({ config: { forward: ['dataLayer.push'] } }),
@@ -43,14 +44,16 @@ export default defineConfig({
   ],
 
   vite: {
+    server: {
+      allowedHosts: true,
+      fs: { strict: false },
+      cors: true,
+    },
     resolve: {
       alias: {
         '~': path.resolve(__dirname, './src'),
         // MANUAL 'astrowind:config' ALIAS REMOVED TO PREVENT VIRTUAL MODULE CONFLICT
       },
-    },
-    server: {
-      fs: { strict: false },
     },
   },
 });
