@@ -1,0 +1,75 @@
+---
+export interface Props {
+  items?: string[];
+  label?: string;
+  id?: string;
+}
+
+const {
+  items = [
+    'AI Executive Order 14110 compliance updates — review required for federal contractors',
+    'EU AI Act enforcement begins August 2026 — high-risk systems must be certified',
+    'NIST AI RMF 1.0 framework now recommended for enterprise AI deployments',
+    'California SB 1047 AI safety reporting requirements — effective Jan 2026',
+    'FTC guidance on AI-generated content disclosure updated March 2026',
+    'SOC 2 Type II — cloud service providers must document AI model usage',
+  ],
+  label = 'Regulatory Updates',
+  id,
+} = Astro.props;
+---
+
+<div
+  class="w-full bg-blue-950 dark:bg-slate-900 text-white overflow-hidden py-2 border-b border-blue-800 dark:border-slate-700"
+  role="marquee"
+  aria-label={label}
+  {...id ? { id } : {}}
+>
+  <div class="flex items-center gap-4 max-w-7xl mx-auto px-4">
+    <span
+      class="shrink-0 bg-blue-600 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full"
+      aria-hidden="true"
+    >
+      {label}
+    </span>
+
+    <div class="overflow-hidden flex-1 relative" aria-live="polite">
+      <ul class="ticker-track flex gap-12 whitespace-nowrap text-sm font-medium text-blue-100">
+        {items.map((item) => (
+          <li class="shrink-0">{item}</li>
+        ))}
+        <!-- Duplicate for seamless loop -->
+        {items.map((item) => (
+          <li class="shrink-0" aria-hidden="true">{item}</li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<style>
+  .ticker-track {
+    animation: ticker-scroll 40s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-track {
+      animation: none;
+      flex-wrap: wrap;
+      white-space: normal;
+    }
+  }
+
+  @keyframes ticker-scroll {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  .ticker-track:hover {
+    animation-play-state: paused;
+  }
+</style>

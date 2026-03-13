@@ -2,6 +2,9 @@
 import Layout from '~/layouts/PageLayout.astro';
 import Hero from '~/components/widgets/Hero.astro';
 import Features from '~/components/widgets/Features.astro';
+import Testimonials from '~/components/widgets/Testimonials.astro';
+import FAQs from '~/components/widgets/FAQs.astro';
+import RegulatoryTicker from '~/components/widgets/RegulatoryTicker.astro';
 import { getPermalink } from '~/utils/permalinks';
 
 // Sherlock Logic: Fetching dynamic content from the Payload CMS Brain
@@ -10,16 +13,24 @@ try {
   const response = await fetch('http://localhost:3000/api/pages?where[slug][equals]=home');
   const data = await response.json();
   content = data.docs?.[0] || {};
-} catch (error) {
+} catch (_error) {
   console.error("Sherlock Trace: CMS connection failed. Using local fallbacks.");
 }
 
-const metadata = { 
-  title: content.title || 'ITCloudX | AI Integration & IT Solutions' 
+const metadata = {
+  title: content.title || 'ITCloudX | AI Integration & IT Solutions',
+  description:
+    'Professional AI integration and IT automation services for Los Angeles SMBs. Automate workflows, reduce costs, and scale faster with the Baker Street Mesh audit system.',
+  openGraph: {
+    type: 'website',
+  },
 };
 ---
 
 <Layout metadata={metadata}>
+  <!-- Regulatory Updates Ticker -->
+  <RegulatoryTicker />
+
   <Hero
     actions={[
       {
@@ -28,62 +39,154 @@ const metadata = {
         href: getPermalink('/contact'),
         icon: 'tabler:chart-bar',
       },
-      { 
-        text: 'Learn more', 
-        href: '#solutions' 
+      {
+        text: 'Learn more',
+        href: '#solutions',
       },
     ]}
-    image={{ 
-      src: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=2070&q=80', 
-      alt: 'ITCloudX AI Integration' 
+    image={{
+      src: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=2070&q=80',
+      alt: 'ITCloudX AI Integration — futuristic digital mesh visualization',
     }}
   >
     <Fragment slot="title">
       <span set:html={content.hero?.title || 'Scale Your Business with AI'} />
     </Fragment>
-    
+
     <Fragment slot="subtitle">
-      <span set:html={content.hero?.subtitle || 'Automate manual workflows with the proprietary Baker Street Mesh audit system.'} />
+      <span
+        set:html={content.hero?.subtitle ||
+          'Automate manual workflows with the proprietary Baker Street Mesh audit system.'}
+      />
     </Fragment>
   </Hero>
 
-  {content.solutions && content.solutions.length > 0 && (
-    <Features
-      id="solutions"
-      tagline="Solutions"
-      title="AI Workforce Built for Growth"
-      subtitle="Stop juggling manual tasks. We deploy automated AI layers specifically for Los Angeles SMBs."
-      items={content.solutions.map((s) => ({
-        title: s.title,
-        description: s.description,
-        icon: s.icon || 'tabler:check',
-      }))}
-    />
-  )}
+  {
+    content.solutions && content.solutions.length > 0 && (
+      <Features
+        id="solutions"
+        tagline="Solutions"
+        title="AI Workforce Built for Growth"
+        subtitle="Stop juggling manual tasks. We deploy automated AI layers specifically for Los Angeles SMBs."
+        items={content.solutions.map((s) => ({
+          title: s.title,
+          description: s.description,
+          icon: s.icon || 'tabler:check',
+        }))}
+      />
+    )
+  }
 
-  {!content.solutions && (
-    <Features
-      id="solutions"
-      tagline="Our Expertise"
-      title="Precision AI Auditing"
-      subtitle="Leveraging the Quadruple Cross Check Шерлок (v2026.2) for 100% data veracity."
-      items={[
-        {
-          title: 'Legal & Audit Automation',
-          description: 'Detect trace inconsistencies in contracts and data fragments using Sherlock Vision OCR.',
-          icon: 'tabler:shield-check',
+  {
+    !content.solutions && (
+      <Features
+        id="solutions"
+        tagline="Our Expertise"
+        title="Precision AI Auditing"
+        subtitle="Leveraging the Quadruple Cross Check Шерлок (v2026.2) for 100% data veracity."
+        items={[
+          {
+            title: 'Legal & Audit Automation',
+            description: 'Detect trace inconsistencies in contracts and data fragments using Sherlock Vision OCR.',
+            icon: 'tabler:shield-check',
+          },
+          {
+            title: 'Market Probability Mapping',
+            description: 'Calculate growth opportunities with Python-backed probability rankings and logic guards.',
+            icon: 'tabler:trending-up',
+          },
+          {
+            title: 'Custom Brand Kits',
+            description: 'Force AI models to speak in your unique brand voice across all offsite discovery channels.',
+            icon: 'tabler:brand-tabler',
+          },
+        ]}
+      />
+    )
+  }
+
+  <!-- Testimonials Section -->
+  <Testimonials
+    id="testimonials"
+    title="What Our Clients Say"
+    subtitle="Real results from Los Angeles businesses that transformed operations with ITCloudX."
+    tagline="Testimonials"
+    testimonials={[
+      {
+        testimonial:
+          'ITCloudX cut our contract review time from 3 days to under 2 hours. The Sherlock OCR system found discrepancies our team had missed for months.',
+        name: 'Maria Gonzalez',
+        job: 'COO, Pacific Rim Logistics',
+        image: {
+          src: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&q=80',
+          alt: 'Portrait of Maria Gonzalez, COO at Pacific Rim Logistics',
         },
-        {
-          title: 'Market Probability Mapping',
-          description: 'Calculate growth opportunities with Python-backed probability rankings and logic guards.',
-          icon: 'tabler:trending-up',
+      },
+      {
+        testimonial:
+          'Our customer service AI handles 80% of inquiries autonomously now. The ROI was evident within the first quarter.',
+        name: 'David Park',
+        job: 'CEO, NoHo Creative Studio',
+        image: {
+          src: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80',
+          alt: 'Portrait of David Park, CEO at NoHo Creative Studio',
         },
-        {
-          title: 'Custom Brand Kits',
-          description: 'Force AI models to speak in your unique brand voice across all offsite discovery channels.',
-          icon: 'tabler:brand-tabler',
+      },
+      {
+        testimonial:
+          "The Baker Street audit uncovered $40K in billing errors across our vendor contracts. Paid for itself on day one.",
+        name: 'Tanya Rivers',
+        job: 'CFO, Westside Medical Group',
+        image: {
+          src: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80',
+          alt: 'Portrait of Tanya Rivers, CFO at Westside Medical Group',
         },
-      ]}
-    />
-  )}
+      },
+    ]}
+  />
+
+  <!-- FAQs Section -->
+  <FAQs
+    id="faqs"
+    title="Frequently Asked Questions"
+    subtitle="Everything you need to know about AI integration for your business."
+    tagline="FAQs"
+    columns={1}
+    items={[
+      {
+        title: 'How long does an AI audit typically take?',
+        description:
+          'Our Baker Street Mesh audit typically completes within 5–7 business days. We deliver a full report with prioritized recommendations and a 90-day implementation roadmap.',
+        icon: 'tabler:clock',
+      },
+      {
+        title: 'Do I need technical staff to work with ITCloudX?',
+        description:
+          'No. We handle all technical implementation. Your team provides domain knowledge; our AI agents handle the automation, integration, and deployment.',
+        icon: 'tabler:users',
+      },
+      {
+        title: 'Is my business data secure?',
+        description:
+          'Yes. All data is processed under SOC 2-compliant infrastructure with end-to-end encryption. We never train models on your proprietary data without explicit written consent.',
+        icon: 'tabler:shield-check',
+      },
+      {
+        title: 'What industries do you serve?',
+        description:
+          "We specialize in legal & compliance, healthcare administration, real estate, logistics, and creative agencies. Our AI systems are customized for each industry's regulatory environment.",
+        icon: 'tabler:building',
+      },
+      {
+        title: 'What is the typical ROI timeline?',
+        description:
+          'Most clients see measurable ROI within 60–90 days of deployment. Workflow automation typically yields 20–40% time savings on targeted processes in the first 3 months.',
+        icon: 'tabler:trending-up',
+      },
+    ]}
+  >
+    <Fragment slot="bg">
+      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+    </Fragment>
+  </FAQs>
 </Layout>

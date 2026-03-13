@@ -1,8 +1,31 @@
 ---
 import { getAsset } from '~/utils/permalinks';
+import { SITE, METADATA } from 'astrowind:config';
 ---
 
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 <link rel="sitemap" href={getAsset('/sitemap-index.xml')} />
+
+<!-- CDN preconnect hints for faster resource loading -->
+<link rel="preconnect" href="https://images.unsplash.com" />
+<link rel="preconnect" href="https://cdn.pixabay.com" />
+<link rel="dns-prefetch" href="https://images.unsplash.com" />
+<link rel="dns-prefetch" href="https://cdn.pixabay.com" />
+
+<!-- Schema.org Organization markup -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": SITE?.name ?? "ITCloudX",
+  "url": SITE?.site ?? "https://itcloudx.com",
+  "logo": {
+    "@type": "ImageObject",
+    "url": (SITE?.site ?? "https://itcloudx.com") + "/favicon.ico"
+  },
+  "description": METADATA?.description ?? "Professional AI integration and IT audit services.",
+  "sameAs": [
+    "https://twitter.com/itcloudx"
+  ]
+})} />
