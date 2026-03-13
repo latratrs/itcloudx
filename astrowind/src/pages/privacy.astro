@@ -1,60 +1,115 @@
+export const prerender = true;
 ---
-import { fetchWithCache } from '~/utils/cache';
 import Layout from '~/layouts/PageLayout.astro';
-import HeroText from '~/components/widgets/HeroText.astro';
 
-// Sherlock Logic: Dynamic Content Fetching for Privacy Page
-let pageData = { title: 'Privacy Policy', content: null, updatedAt: null };
-
-try {
-  const response = await fetch('http://localhost:3000/api/pages?where[slug][equals]=privacy');
-  const result = await response.json();
-  if (result.docs?.[0]) {
-    pageData = result.docs[0];
-  }
-} catch (e) {
-  console.error("Sherlock Trace: CMS connection failed for Privacy audit.");
-}
-
-/** * Lexical Serializer Logic
- */
-function serialize(nodes) {
-  if (!nodes) return "";
-  return nodes.map((node) => {
-    if (node.type === 'text') {
-      let text = node.text;
-      if (node.format & 1) text = `<strong>${text}</strong>`;
-      return text;
-    }
-    if (!node.children) return "";
-    const children = serialize(node.children);
-    switch (node.type) {
-      case 'h1': return `<h1>${children}</h1>`;
-      case 'h2': return `<h2>${children}</h2>`;
-      case 'paragraph': return `<p>${children}</p>`;
-      case 'list': return `<ul>${children}</ul>`;
-      case 'listitem': return `<li>${children}</li>`;
-      default: return children;
-    }
-  }).join('');
-}
-
-const htmlContent = pageData.content?.root?.children 
-  ? serialize(pageData.content.root.children) 
-  : "Privacy Policy pending CMS entry...";
-
-const metadata = { title: pageData.title };
+const metadata = {
+  title: 'Privacy Policy – TradeShield AI',
+  description: 'TradeShield AI Privacy Policy. How Deccod and ITCloudX handle your data in AI-powered trade compliance tools. Last updated March 7, 2026.',
+  ignoreTitleTemplate: true,
+};
 ---
 
 <Layout metadata={metadata}>
-  <HeroText 
-    title={pageData.title} 
-    subtitle={pageData.updatedAt ? `Last updated: ${new Date(pageData.updatedAt).toLocaleDateString()}` : ''} 
-  />
+  <section class="min-h-screen py-20 md:py-28 bg-gradient-to-b from-white to-[#f7f5f0] dark:from-gray-950 dark:to-gray-900 transition-colors">
+    <div class="max-w-5xl mx-auto px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h1 class="text-5xl md:text-6xl font-black text-gray-900 dark:text-white leading-tight">
+          Privacy Policy
+        </h1>
+        <p class="mt-6 text-xl text-gray-600 dark:text-gray-400">
+          Last updated: March 7, 2026
+        </p>
+      </div>
 
-  <section class="px-4 py-16 sm:px-6 mx-auto lg:px-8 max-w-4xl">
-    <article class="prose prose-lg dark:prose-invert max-w-none">
-      <div set:html={htmlContent} />
-    </article>
+      <div class="prose prose-slate dark:prose-invert max-w-none mx-auto text-gray-800 dark:text-gray-200 space-y-8">
+        <p class="text-xl font-medium text-center">
+          This Privacy Policy explains how Deccod (the Company) and ITCloudX (the Operator) collect, use, disclose, and safeguard your information when you use the TradeShield AI Service.
+        </p>
+
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white mt-12 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
+          1. Information We Collect
+        </h2>
+
+        <p>
+          We collect information you provide directly, such as:
+        </p>
+        <ul class="list-disc pl-6 space-y-3">
+          <li>Business name, contact details, and email when you submit scans or inquiries</li>
+          <li>Uploaded documents or data for compliance analysis (HS codes, invoices, product descriptions)</li>
+          <li>Usage data (IP address, browser type, pages visited) collected automatically</li>
+        </ul>
+
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white mt-16 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
+          2. How We Use Your Information
+        </h2>
+
+        <ul class="list-disc pl-6 space-y-3">
+          <li>To provide, maintain, and improve the Service (compliance scans, AI processing)</li>
+          <li>To communicate with You about the Service, updates, or support</li>
+          <li>To detect, prevent, or address technical issues, fraud, or misuse</li>
+          <li>To comply with legal obligations</li>
+        </ul>
+
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white mt-16 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
+          3. Data Storage and Security
+        </h2>
+
+        <p>
+          Your data is stored securely in the United States using industry-standard encryption and access controls. Uploaded documents are processed temporarily and deleted after analysis unless you explicitly request retention.
+        </p>
+        <p class="mt-4">
+          We implement appropriate technical and organizational measures to protect your personal data against unauthorized access, loss, or destruction.
+        </p>
+
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white mt-16 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
+          4. Sharing of Information
+        </h2>
+
+        <p>
+          We do not sell your personal data. We may share information with:
+        </p>
+        <ul class="list-disc pl-6 space-y-3">
+          <li>Service providers (hosting, analytics, OCR tools) under strict confidentiality</li>
+          <li>Legal authorities when required by law</li>
+        </ul>
+
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white mt-16 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
+          5. Your Rights
+        </h2>
+
+        <p>
+          Depending on your location, You may have rights to:
+        </p>
+        <ul class="list-disc pl-6 space-y-3">
+          <li>Access, correct, or delete your personal data</li>
+          <li>Object to or restrict certain processing</li>
+          <li>Withdraw consent where applicable</li>
+        </ul>
+        <p class="mt-4">
+          To exercise these rights, use the form on our <a href="/contact" class="text-teal-600 dark:text-teal-400 hover:underline">Contact page</a>.
+        </p>
+
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white mt-16 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
+          6. Changes to This Privacy Policy
+        </h2>
+
+        <p>
+          We may update this Privacy Policy from time to time. Changes will be posted here with an updated date. Continued use of the Service after changes constitutes acceptance.
+        </p>
+
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white mt-16 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
+          7. Contact Us
+        </h2>
+
+        <p class="text-center mt-8">
+          <a 
+            href="/contact" 
+            class="inline-flex items-center gap-3 bg-teal-600 hover:bg-teal-700 text-white font-bold text-lg px-10 py-5 rounded-xl shadow-lg transition-all hover:shadow-xl hover:scale-[1.02]"
+          >
+            Contact Deccod Team →
+          </a>
+        </p>
+      </div>
+    </div>
   </section>
 </Layout>

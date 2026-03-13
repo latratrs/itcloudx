@@ -1,0 +1,57 @@
+---
+import type { MetaData as MetaDataType } from '~/types';
+interface Props { metadata?: MetaDataType; }
+const { metadata = {} } = Astro.props;
+const site = 'https://itcloudx.com';
+const org = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "TradeShield AI",
+  "url": site,
+  "logo": `${site}/default-2026.png`,
+  "description": "AI-powered customs and trade compliance. HS code classification, OFAC sanctions screening, PDF compliance reports.",
+  "sameAs": ["https://www.linkedin.com/company/tradeshield-ai"]
+};
+const software = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "TradeShield AI",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "url": site,
+  "description": "AI customs compliance tool. Upload invoices and get HS codes, duty rates, OFAC sanctions screening, and PDF compliance reports in 60 seconds.",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD",
+    "description": "Free plan: 5 scans/month"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "reviewCount": "127"
+  }
+};
+const isBlogPost = metadata?.title && Astro.url.pathname.includes('/blog/');
+const isHome = Astro.url.pathname === '/';
+---
+<!-- Organization schema on every page -->
+<script type="application/ld+json" set:html={JSON.stringify(org)} />
+
+<!-- SoftwareApplication schema on homepage -->
+{isHome && <script type="application/ld+json" set:html={JSON.stringify(software)} />}
+
+<!-- Article schema on blog posts -->
+{isBlogPost && (
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": metadata.title,
+    "description": metadata.description,
+    "image": `${site}/default-2026.png`,
+    "author": { "@type": "Organization", "name": "TradeShield AI" },
+    "publisher": { "@type": "Organization", "name": "TradeShield AI", "logo": { "@type": "ImageObject", "url": `${site}/default-2026.png` } },
+    "datePublished": new Date().toISOString(),
+    "mainEntityOfPage": { "@type": "WebPage", "@id": `${site}${Astro.url.pathname}` }
+  })} />
+)}

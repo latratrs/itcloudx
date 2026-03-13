@@ -1,244 +1,399 @@
 ---
+export const prerender = true;
 import Layout from '~/layouts/PageLayout.astro';
-import HeroText from '~/components/widgets/HeroText.astro';
-import Prices from '~/components/widgets/Pricing.astro';
-import FAQs from '~/components/widgets/FAQs.astro';
-import Steps from '~/components/widgets/Steps.astro';
-import Features3 from '~/components/widgets/Features3.astro';
-import CallToAction from '~/components/widgets/CallToAction.astro';
-
-const metadata = {
-  title: 'Pricing',
+const meta = {
+  title: 'Pricing — TradeShield AI | Stop Customs Fines Before They Start',
+  description: 'TradeShield AI pricing: Free (5 scans/month), Professional $299/mo (unlimited scans, full OFAC screening, PDF reports), Enterprise $999+/mo (API access, ERP integration). AI-powered HS code classification and customs compliance for importers and freight forwarders.',
 };
 ---
 
-<Layout metadata={metadata}>
-  <!-- HeroText Widget ******************* -->
+<Layout metadata={meta}>
 
-  <HeroText
-    tagline="Pricing"
-    title="Stellar Pricing for Every Journey"
-    subtitle="Choose the perfect plan that aligns with your cosmic goals."
-  />
+<div id="pricing-page">
 
-  <!-- Pricing Widget ******************* -->
+  <!-- ═══════════════════ HERO ═══════════════════ -->
+  <section class="relative bg-gradient-to-br from-[#0b1e3d] via-[#0b1e3d] to-[#0a7c6e]/30 overflow-hidden">
+    <div class="absolute inset-0 opacity-10"
+      style="background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 40px 40px;">
+    </div>
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full opacity-20 pointer-events-none"
+      style="background: radial-gradient(ellipse, #0a7c6e 0%, transparent 70%);">
+    </div>
 
-  <Prices
-    title="Our prices"
-    subtitle="Only pay for what you need"
-    prices={[
-      {
-        title: 'basic',
-        subtitle: 'Optimal choice for personal use',
-        price: 29,
-        period: 'per month',
-        items: [
-          {
-            description: 'Etiam in libero, et volutpat',
-          },
-          {
-            description: 'Aenean ac nunc dolor tristique',
-          },
-          {
-            description: 'Cras scelerisque accumsan lib',
-          },
-          {
-            description: 'In hac habitasse',
-          },
-        ],
-        callToAction: {
-          target: '_blank',
-          text: 'Get started',
-          href: '#',
-        },
-      },
-      {
-        title: 'standard',
-        subtitle: 'Optimal choice for small teams',
-        price: 69,
-        period: 'Per Month',
-        items: [
-          {
-            description: 'Proin vel laoreet',
-          },
-          {
-            description: 'Ut efficitur habitasse egestas',
-          },
-          {
-            description: 'Volutpat hac curabitur',
-          },
-          {
-            description: 'Pellentesque blandit ut nibh',
-          },
-          {
-            description: 'Donec fringilla sem',
-          },
-        ],
-        callToAction: {
-          target: '_blank',
-          text: 'Get started',
-          href: '#',
-        },
-        hasRibbon: true,
-        ribbonTitle: 'popular',
-      },
-      {
-        title: 'premium',
-        subtitle: 'Optimal choice for companies',
-        price: 199,
-        period: 'Per Month',
-        items: [
-          {
-            description: 'Curabitur suscipit risus',
-          },
-          {
-            description: 'Aliquam habitasse malesuada',
-          },
-          {
-            description: 'Suspendisse sit amet blandit',
-          },
-          {
-            description: 'Suspendisse auctor blandit dui',
-          },
-        ],
-        callToAction: {
-          target: '_blank',
-          text: 'Get started',
-          href: '#',
-        },
-      },
-    ]}
-  />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 pt-16 pb-14 md:pt-24 md:pb-20 text-center">
 
-  <!-- Features3 Widget ************** -->
+      <div class="flex justify-center mb-6">
+        <span class="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-[#0fb39d] text-xs font-bold uppercase tracking-widest px-5 py-2 rounded-full">
+          <span class="w-2 h-2 rounded-full bg-[#0fb39d] animate-pulse inline-block"></span>
+          Public Beta · Founding Member Pricing Locked In Forever
+        </span>
+      </div>
 
-  <Features3
-    title="Price-related features"
-    subtitle="Discover the advantages of choosing our plans"
-    columns={2}
-    items={[
-      {
-        title: 'Tiered Pricing Plans',
-        description: 'Choose from a range of pricing plans designed to accommodate different budgets and requirements.',
-        icon: 'tabler:stairs',
-      },
-      {
-        title: 'Transparent Pricing',
-        description: 'Clearly displayed pricing details for each plan, with no hidden costs or unexpected charges.',
-        icon: 'tabler:flip-vertical',
-      },
-      {
-        title: 'Secure Payment Methods',
-        description: 'Secure payment gateways to protect your financial information during transactions.',
-        icon: 'tabler:shield-lock',
-      },
-      {
-        title: 'Instant Access',
-        description: `Immediate access to your chosen plan's features and templates upon subscription.`,
-        icon: 'tabler:accessible',
-      },
-      {
-        title: 'Upgrade Value',
-        description: 'Upgrade to higher-tier plans to unlock more features and benefits for an enhanced experience.',
-        icon: 'tabler:chevrons-up',
-      },
-      {
-        title: '24H support',
-        description: 'Questions answered via live chat, email or phone, every calendar day.',
-        icon: 'tabler:headset',
-      },
-    ]}
-    classes={{ container: 'max-w-5xl' }}
-  />
+      <h1 class="text-4xl md:text-6xl lg:text-7xl font-black leading-tight tracking-tight text-white mb-4">
+        The cost of getting it wrong<br>
+        <span style="color:#0fb39d">is not optional anymore.</span>
+      </h1>
 
-  <!-- Steps Widget ****************** -->
+      <p class="text-lg md:text-xl text-white/70 max-w-2xl mx-auto mb-4">
+        CBP is using AI. De minimis is gone. UFLPA fines start at $10,000.<br>
+        TradeShield AI runs your full compliance audit in <strong class="text-white">60 seconds</strong> — before the shipment moves.
+      </p>
 
-  <Steps
-    title="A guided journey from plans to creativity"
-    tagline="simplified process"
-    isReversed={true}
-    items={[
-      {
-        title: 'Explore plans',
-        icon: 'tabler:number-1',
-      },
-      {
-        title: 'Select a plan',
-        icon: 'tabler:number-2',
-      },
-      {
-        title: 'Sign Up / Log In',
-        icon: 'tabler:number-3',
-      },
-      {
-        title: 'Review order',
-        icon: 'tabler:number-4',
-      },
-      {
-        title: 'Enter payment details',
-        icon: 'tabler:number-5',
-      },
-      {
-        title: 'Confirmation',
-        icon: 'tabler:number-6',
-      },
-      {
-        title: 'Download and start using the template(s)',
-        icon: 'tabler:number-7',
-      },
-    ]}
-    image={{
-      src: 'https://images.unsplash.com/photo-1536816579748-4ecb3f03d72a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=987&q=80',
-      alt: 'Steps image',
-    }}
-  />
+      <!-- Reddit quotes -->
+      <div class="flex flex-wrap justify-center gap-3 mt-8">
+        <div class="rounded-lg px-4 py-3 text-left max-w-[260px] bg-white/5 border-l-4 border-l-red-500/55" style="border:1px solid rgba(255,80,30,0.2); border-left:3px solid rgba(255,80,30,0.55);">
+          <div class="text-[11px] font-black uppercase tracking-widest mb-1 text-red-400/70">r/FulfillmentByAmazon</div>
+          <p class="text-sm text-red-200/90">"Why is my inventory stuck at the Port of Long Beach? Section 301 is killing us."</p>
+        </div>
+        <div class="rounded-lg px-4 py-3 text-left max-w-[260px] bg-white/5" style="border:1px solid rgba(255,80,30,0.2); border-left:3px solid rgba(255,80,30,0.55);">
+          <div class="text-[11px] font-black uppercase tracking-widest mb-1 text-red-400/70">r/AmazonSeller</div>
+          <p class="text-sm text-red-200/90">"Can't afford $150 broker fees to classify a $300 order. De minimis is gone."</p>
+        </div>
+        <div class="rounded-lg px-4 py-3 text-left max-w-[260px] bg-white/5" style="border:1px solid rgba(255,80,30,0.2); border-left:3px solid rgba(255,80,30,0.55);">
+          <div class="text-[11px] font-black uppercase tracking-widest mb-1 text-red-400/70">r/logistics</div>
+          <p class="text-sm text-red-200/90">"$500/day detention fee. Nobody warned me about UFLPA. Shipment seized."</p>
+        </div>
+      </div>
 
-  <!-- FAQs Widget ******************* -->
+    </div>
+  </section>
 
-  <FAQs
-    title="Pricing FAQs"
-    subtitle="Choosing the right plan is important, and we're here to answer your questions. If you have queries about our pricing options, you're in the right place."
-    columns={1}
-    items={[
-      {
-        title: 'Do the plans come with customer support?',
-        description:
-          'Absolutely, all plans include access to our dedicated customer support to assist you with any queries or concerns.',
-      },
-      {
-        title: 'Is there a trial period for the different plans?',
-        description:
-          "Unfortunately, we don't offer trial periods for the plans. However, you can check out our demo section to preview the quality of our templates.",
-      },
-      {
-        title: 'Can I switch between plans?',
-        description:
-          'Certainly! You can easily upgrade or downgrade your plan, at any time, to find the one that best suits your evolving requirements.',
-      },
-      {
-        title: 'What payment methods do you accept?',
-        description:
-          'We accept major credit cards and online payment methods to ensure a convenient and secure transaction process.',
-      },
-      {
-        title: 'Are there any hidden fees beyond the displayed cost?',
-        description:
-          'No, the subscription cost covers all the features and templates listed under each plan. There are no hidden fees or extra charges.',
-      },
-    ]}
-  />
+  <!-- ═══════════════════ PAIN → SOLUTION STRIP ═══════════════════ -->
+  <section class="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700">
+    <div class="max-w-6xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-100">
+      <div class="px-5 py-5">
+        <div class="text-[11px] font-black uppercase tracking-widest mb-2 text-[#b8361e]">⚠ Reddit Complaint</div>
+        <p class="text-sm italic text-gray-500 dark:text-gray-300">"De Minimis is gone. Formal entry on every $300 order."</p>
+      </div>
+      <div class="px-5 py-5">
+        <div class="text-[11px] font-black uppercase tracking-widest mb-2 text-[#0a7c6e]">✓ TradeShield Fix</div>
+        <p class="text-sm font-semibold text-[#0a7c6e]">10-digit HTS codes + stacked tariffs in 60 seconds. Fraction of broker cost.</p>
+      </div>
+      <div class="px-5 py-5">
+        <div class="text-[11px] font-black uppercase tracking-widest mb-2 text-[#b8361e]">⚠ Reddit Complaint</div>
+        <p class="text-sm italic text-gray-500 dark:text-gray-300">"Supplier wrote 'clothing'. CBP fined me $10K."</p>
+      </div>
+      <div class="px-5 py-5">
+        <div class="text-[11px] font-black uppercase tracking-widest mb-2 text-[#0a7c6e]">✓ TradeShield Fix</div>
+        <p class="text-sm font-semibold text-[#0a7c6e]">Vague-term detection flags bad descriptions before your PDF is generated.</p>
+      </div>
+    </div>
+  </section>
 
-  <!-- CallToAction Widget *********** -->
+  <!-- ═══════════════════ PLANS ═══════════════════ -->
+  <section class="py-20 bg-[#f7f5f0] dark:bg-gray-900">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
 
-  <CallToAction
-    title="Ready to boost your projects?"
-    subtitle="Join our community of satisfied customers who have transformed their work with our templates."
-    actions={[
-      {
-        variant: 'primary',
-        text: 'Get started now',
-        href: '/',
-      },
-    ]}
-  />
+      <div class="text-center mb-10">
+        <span class="text-xs font-bold uppercase tracking-widest text-[#0a7c6e] mb-3 block">Choose Your Plan</span>
+        <h2 class="text-3xl md:text-5xl font-black text-[#0b1e3d] dark:text-white">Start free. Scale when you're ready.</h2>
+      </div>
+
+      <!-- BILLING TOGGLE -->
+      <div class="flex items-center justify-center gap-4 mb-10">
+        <span class="text-base font-bold cursor-pointer text-[#0b1e3d]" id="lbl-mo" onclick="setBilling(false)">Monthly</span>
+        <div onclick="toggleBilling()" id="toggle"
+          class="relative cursor-pointer rounded-full transition-all duration-300"
+          style="width:52px;height:28px;background:#d1d5db;border:2px solid #d1d5db;">
+          <div id="toggle-thumb"
+            class="absolute rounded-full transition-all duration-300"
+            style="width:22px;height:22px;background:#ffffff;top:1px;left:1px;box-shadow:0 1px 4px rgba(0,0,0,0.2);"></div>
+        </div>
+        <span class="text-base font-bold cursor-pointer text-gray-400" id="lbl-yr" onclick="setBilling(true)">Annual</span>
+        <span class="text-xs font-black px-3 py-1 rounded-full bg-[#f0a820] text-[#0b1e3d]">2 MONTHS FREE</span>
+      </div>
+
+      <!-- PLAN CARDS -->
+      <div class="grid md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
+
+        <!-- FREE -->
+        <div class="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
+          <div class="p-7 border-b border-gray-100">
+            <div class="text-[11px] font-black uppercase tracking-widest mb-2 text-gray-400">Tier 1</div>
+            <h3 class="text-2xl font-black mb-2 text-[#0b1e3d]">Free Audit</h3>
+            <p class="text-sm mb-5 text-gray-500">Prove it works. No card. No broker. Just results.</p>
+            <div class="flex items-baseline gap-1">
+              <span class="text-5xl font-black text-[#0b1e3d]">$0</span>
+              <span class="text-base text-gray-400">/ forever</span>
+            </div>
+            <div class="inline-block text-xs font-bold px-3 py-1 rounded-full mt-3 bg-[#f7f5f0] text-[#0b1e3d]">5 scans / month</div>
+          </div>
+          <ul class="px-7 py-5 space-y-2.5">
+            <li class="flex gap-2 text-sm text-gray-600"><span>🔍</span><span>6-digit HS code classification</span></li>
+            <li class="flex gap-2 text-sm text-gray-600"><span>🛡️</span><span>Basic OFAC sanctions screening</span></li>
+            <li class="flex gap-2 text-sm text-gray-600"><span>📄</span><span>Watermarked PDF reports</span></li>
+            <li class="flex gap-2 text-sm text-gray-600"><span>⚡</span><span>60-second scan turnaround</span></li>
+            <li class="flex gap-2 text-sm text-gray-300"><span>✗</span><span>No document retention</span></li>
+            <li class="flex gap-2 text-sm text-gray-300"><span>✗</span><span>No bulk CSV upload</span></li>
+          </ul>
+          <div class="px-7 pb-7">
+            <a href="/#upload"
+              class="block text-center font-bold py-3.5 rounded-xl text-sm border-2 border-[#0b1e3d] text-[#0b1e3d] hover:bg-[#0b1e3d] hover:text-white transition-colors">
+              Start Free Scan →
+            </a>
+          </div>
+        </div>
+
+        <!-- PROFESSIONAL -->
+        <div class="bg-[#0b1e3d] rounded-2xl overflow-visible border-2 border-[#0a7c6e] shadow-2xl shadow-[#0a7c6e]/20 transition-all duration-200 hover:-translate-y-1 relative">
+          <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#0a7c6e] text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full">Most Popular</div>
+          <div class="p-7 pt-10 border-b border-white/10">
+            <div class="text-[11px] font-black uppercase tracking-widest mb-2 text-[#0fb39d]">Tier 2</div>
+            <h3 class="text-2xl font-black mb-2 text-white">Professional</h3>
+            <p class="text-sm mb-5 text-white/50">For Amazon FBA sellers crushed by the de minimis wall.</p>
+            <div class="flex items-baseline gap-1 flex-wrap">
+              <span class="text-base line-through hidden text-white/30" id="pro-orig">$299</span>
+              <span class="text-5xl font-black text-white" id="pro-amt">$299</span>
+              <span class="text-base text-white/40">/ mo</span>
+            </div>
+            <div class="text-xs font-semibold mt-1 hidden text-[#0fb39d]" id="pro-note">$2,990 billed annually — save $598</div>
+            <div class="inline-block text-xs font-bold px-3 py-1 rounded-full mt-3 bg-white/10 text-white">500 scans / month</div>
+          </div>
+          <ul class="px-7 py-5 space-y-2.5">
+            <li class="flex gap-2 text-sm text-white/70"><span>✅</span><span><strong class="text-white">Full 10-digit HTS codes</strong> + Section 301/232/122 surcharges auto-calculated</span></li>
+            <li class="flex gap-2 text-sm text-white/70"><span>✅</span><span><strong class="text-white">Bulk CSV upload</strong> — 500 SKUs, stacked tariffs in one pass</span></li>
+            <li class="flex gap-2 text-sm text-white/70"><span>✅</span><span>Vague-term detection + forced correction</span></li>
+            <li class="flex gap-2 text-sm text-white/70"><span>✅</span><span>Full OFAC + EU + UN sanctions screening</span></li>
+            <li class="flex gap-2 text-sm text-white/70"><span>✅</span><span>Unwatermarked PDF reports</span></li>
+            <li class="flex gap-2 text-sm text-white/70"><span>✅</span><span>30-day document retention</span></li>
+            <li class="flex gap-2 text-sm text-white/70"><span>✅</span><span>Tariff-change email alerts</span></li>
+          </ul>
+          <div class="px-7 pb-7">
+            <div id="paypal-pro-mo"></div>
+            <div id="paypal-pro-yr" class="hidden"></div>
+          </div>
+        </div>
+
+        <!-- PREMIUM -->
+        <div class="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
+          <div class="p-7 border-b border-gray-100">
+            <div class="text-[11px] font-black uppercase tracking-widest mb-2 text-gray-400">Tier 3</div>
+            <h3 class="text-2xl font-black mb-2 text-[#0b1e3d]">Premium</h3>
+            <p class="text-sm mb-5 text-gray-500">For mid-size importers facing real audit risk.</p>
+            <div class="flex items-baseline gap-1 flex-wrap">
+              <span class="text-base line-through hidden text-gray-300" id="prem-orig">$799</span>
+              <span class="text-5xl font-black text-[#0b1e3d]" id="prem-amt">$799</span>
+              <span class="text-base text-gray-400">/ mo</span>
+            </div>
+            <div class="text-xs font-semibold mt-1 hidden text-[#0a7c6e]" id="prem-note">$7,990 billed annually — save $1,598</div>
+            <div class="inline-block text-xs font-bold px-3 py-1 rounded-full mt-3 bg-[#f7f5f0] text-[#0b1e3d]">2,500 scans / month</div>
+          </div>
+          <ul class="px-7 py-5 space-y-2.5">
+            <li class="flex gap-2 text-sm text-gray-600"><span>✅</span><span>Everything in Professional</span></li>
+            <li class="flex gap-2 text-sm text-gray-600"><span>✅</span><span><strong class="text-[#0b1e3d]">Cross-document validation</strong> — Invoice vs. Packing List vs. B/L</span></li>
+            <li class="flex gap-2 text-sm text-gray-600"><span>✅</span><span><strong class="text-[#0b1e3d]">UFLPA forced-labor screening</strong> + transshipment fraud detection</span></li>
+            <li class="flex gap-2 text-sm text-gray-600"><span>✅</span><span><strong class="text-[#0b1e3d]">5-Year Compliance Vault</strong> — tamper-evident, audit-ready storage</span></li>
+            <li class="flex gap-2 text-sm text-gray-600"><span>✅</span><span>CBAM (Carbon Border Adjustment) basic checks</span></li>
+            <li class="flex gap-2 text-sm text-gray-600"><span>✅</span><span>Advanced supplier risk scoring</span></li>
+            <li class="flex gap-2 text-sm text-gray-600"><span>✅</span><span>Priority support — 4hr response</span></li>
+          </ul>
+          <div class="px-7 pb-7">
+            <div id="paypal-prem-mo"></div>
+            <div id="paypal-prem-yr" class="hidden"></div>
+          </div>
+        </div>
+
+        <!-- ENTERPRISE -->
+        <div class="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
+          <div class="p-7 border-b border-gray-100">
+            <div class="text-[11px] font-black uppercase tracking-widest mb-2 text-gray-400">Tier 4</div>
+            <h3 class="text-2xl font-black mb-2 text-[#0b1e3d]">Enterprise</h3>
+            <p class="text-sm mb-5 text-gray-500">Mission-critical infrastructure for 3PLs and freight forwarders.</p>
+            <div class="flex items-baseline gap-1">
+              <span class="text-4xl font-black text-[#0b1e3d]">Custom</span>
+            </div>
+            <div class="text-xs font-bold uppercase tracking-wide mt-1 text-gray-400">Starting at $1,999 / mo</div>
+            <div class="inline-block text-xs font-bold px-3 py-1 rounded-full mt-3 bg-[#f7f5f0] text-[#0b1e3d]">Unlimited scans via API</div>
+          </div>
+          <ul class="px-7 py-5 space-y-2.5">
+            <li class="flex gap-2 text-sm text-gray-600"><span>✅</span><span>Everything in Premium</span></li>
+            <li class="flex gap-2 text-sm text-gray-600"><span>✅</span><span><strong class="text-[#0b1e3d]">REST API access</strong> — integrate with TMS/ERP</span></li>
+            <li class="flex gap-2 text-sm text-gray-600"><span>✅</span><span>Shopify, NetSuite, SAP, CargoWise integrations</span></li>
+            <li class="flex gap-2 text-sm text-gray-600"><span>✅</span><span><strong class="text-[#0b1e3d]">Predictive red-channel targeting defense</strong></span></li>
+            <li class="flex gap-2 text-sm text-gray-600"><span>✅</span><span>White-label option for freight forwarders</span></li>
+            <li class="flex gap-2 text-sm text-gray-600"><span>✅</span><span>Dedicated compliance agent</span></li>
+            <li class="flex gap-2 text-sm text-gray-600"><span>✅</span><span>Quarterly risk-review calls</span></li>
+          </ul>
+          <div class="px-7 pb-7">
+            <a href="mailto:compliance@itcloudx.com?subject=TradeShield%20AI%20Enterprise%20Inquiry"
+              class="block text-center font-bold py-3.5 rounded-xl text-sm transition-colors"
+              style="background:linear-gradient(135deg,#c27d0e,#f0a820);color:#0b1e3d;">
+              Request Custom Quote →
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ COMPARISON TABLE ═══════════════════ -->
+  <section class="py-20 bg-white dark:bg-gray-950">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6">
+      <div class="text-center mb-12">
+        <span class="text-xs font-bold uppercase tracking-widest text-[#0a7c6e] mb-3 block">Feature Comparison</span>
+        <h2 class="text-3xl md:text-4xl font-black text-[#0b1e3d] dark:text-white">Everything you need to stay out of the red channel</h2>
+      </div>
+      <div class="rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+        <div class="grid grid-cols-5 bg-[#0b1e3d]">
+          <div class="p-4 col-span-2 text-xs font-black uppercase tracking-widest text-white">Feature</div>
+          <div class="p-4 text-center text-xs font-black uppercase tracking-widest text-gray-400">Free</div>
+          <div class="p-4 text-center text-xs font-black uppercase tracking-widest text-[#0fb39d]">Professional</div>
+          <div class="p-4 text-center text-xs font-black uppercase tracking-widest text-gray-400">Premium</div>
+        </div>
+        <div class="divide-y divide-gray-100">
+          {[
+            ['Monthly scans','5','500','2,500'],
+            ['HS code depth','6-digit','10-digit','10-digit'],
+            ['Section 301/232/122 surcharges','—','✓','✓'],
+            ['OFAC sanctions screening','Basic','Full','Full'],
+            ['EU + UN sanctions lists','—','✓','✓'],
+            ['Bulk CSV upload','—','✓','✓'],
+            ['Vague-term detection','—','✓','✓'],
+            ['Cross-document validation','—','—','✓'],
+            ['UFLPA forced-labor screening','—','—','✓'],
+            ['5-Year Compliance Vault','—','—','✓'],
+            ['PDF reports','Watermarked','Full','Full'],
+            ['Document retention','None','30 days','5 years'],
+            ['Support','Community','Email','Priority 4hr'],
+          ].map(([feat, f, p, prem], i) => (
+            <div class={`grid grid-cols-5 hover:bg-[#f7f5f0] transition-colors p-4 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+              <div class="col-span-2 font-semibold text-sm text-[#0b1e3d]">{feat}</div>
+              <div class={`text-center text-sm ${f === '✓' ? 'font-bold text-[#0a7c6e]' : f === '—' ? 'text-gray-300' : 'text-gray-500'}`}>{f}</div>
+              <div class={`text-center text-sm bg-[#0a7c6e]/5 ${p === '—' ? 'text-gray-300' : 'font-bold text-[#0a7c6e]'}`}>{p}</div>
+              <div class={`text-center text-sm ${prem === '✓' ? 'font-bold text-[#0a7c6e]' : prem === '—' ? 'text-gray-300' : 'text-gray-500'}`}>{prem}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ FAQ ═══════════════════ -->
+  <section class="py-20 bg-[#f7f5f0] dark:bg-gray-900">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6">
+      <div class="text-center mb-12">
+        <span class="text-xs font-bold uppercase tracking-widest text-[#0a7c6e] mb-3 block">Common Questions</span>
+        <h2 class="text-3xl md:text-4xl font-black text-[#0b1e3d] dark:text-white">Everything you need to know</h2>
+      </div>
+      <div class="space-y-3">
+        {[
+          ['What happens now that the $800 de minimis threshold is eliminated?',
+           'Every shipment now requires formal customs entry — CBP Form 3461, accurate 10-digit HTS codes, full duty payment, and ISF filing. TradeShield Professional automates classification, cutting your per-entry cost from ~$150 (broker) to under $1.'],
+          ['How accurate is the HS code classification vs. a human broker?',
+           'Sherlock Vision OCR + Gemini AI achieves 97%+ accuracy on standard consumer goods. For complex dual-use items — drones, semiconductors, chemicals — we flag them HIGH and recommend broker review. We never silently pass something dangerous.'],
+          ['What is the 5-Year Compliance Vault and why does it matter?',
+           'CBP, DHHS, OIG, and CMS require importers to retain trade documents for a minimum of 5 years. Failure during an audit results in fines even if the original shipment was compliant. The Vault stores all scan records in tamper-evident, audit-ready format — one-click audit defense.'],
+          ['Can freight forwarders white-label TradeShield AI for their clients?',
+           'Yes — Enterprise includes a white-label option. You can embed TradeShield AI as your own compliance copilot, branded for your brokerage or 3PL. Use the Request Custom Quote button above to get in touch.'],
+          ["Is my founding member Beta pricing really locked in forever?",
+           "Yes. We're in public beta and pricing will increase as we add features. Any plan you subscribe to during the beta period is grandfathered at that price for as long as you remain an active subscriber — even after we raise rates."],
+          ['What file types can I upload?',
+           'PDF (commercial invoices, packing lists, bills of lading), CSV/Excel (product catalogs, SKU lists), and images (JPG, PNG, TIFF). Maximum 25MB per file.'],
+          ['Can I cancel anytime?',
+           'Yes. Monthly plans cancel with no penalty. Annual plans can be cancelled but are non-refundable for the remaining term. You retain Compliance Vault access for 90 days after cancellation.'],
+        ].map(([q, a]) => (
+          <div class="bg-white rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 dark:bg-gray-800">
+            <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <span class="font-bold text-base pr-4 text-[#0b1e3d] dark:text-white">{q}</span>
+              <span class="faq-arr flex-shrink-0 transition-transform text-sm text-gray-400">▼</span>
+            </button>
+            <div class="faq-body hidden px-6 pb-6">
+              <p class="text-sm leading-relaxed text-gray-600 dark:text-gray-300">{a}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ FINAL CTA ═══════════════════ -->
+  <section class="py-24 bg-gradient-to-br from-[#0b1e3d] to-[#0a7c6e] text-white text-center">
+    <div class="max-w-4xl mx-auto px-6">
+      <h2 class="text-4xl md:text-6xl font-black leading-tight mb-6">
+        Your next shipment is 60 seconds<br>
+        <span style="color:#0fb39d">from being compliant.</span>
+      </h2>
+      <p class="text-xl text-white/70 mb-10">No broker. No waiting. No $500/day port detention surprise.</p>
+      <a href="/" class="inline-flex items-center gap-3 bg-white text-[#0b1e3d] font-black text-lg px-12 py-5 rounded-2xl shadow-2xl hover:bg-gray-100 transition-all hover:scale-105">
+        Run Your Free Audit → <span class="text-2xl">⚡</span>
+      </a>
+      <p class="mt-6 text-white/40 text-sm">No card needed · First 5 scans free · Powered by Deccod · Built on Google Cloud</p>
+    </div>
+  </section>
+
+</div>
+
+<script src="https://www.paypal.com/sdk/js?client-id=AQu2DIWmRI5-Lv8n_GnWuY5XjcEpfhTm9Vx8DBGgbh2Rh_nWwyU83OBByfBlr96o4gtotz0pqkjtk6kq&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
+<script>
+  var PLANS = {
+    proMo:  'P-1NU513273T353600TNGWN7CQ',
+    proYr:  'P-7GJ23119F6048484ANGWOEWY',
+    premMo: 'P-6B6986702B7923417NGWOKBQ',
+    premYr: 'P-4XK302596Y708620JNGWOMYA'
+  };
+  var isAnnual = false, rendered = false;
+
+  function makeBtn(planId, cid) {
+    if (!window.paypal) return;
+    paypal.Buttons({
+      style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'subscribe' },
+      createSubscription: function(d, a) { return a.subscription.create({ plan_id: planId }); },
+      onApprove: function(d) { window.location.href = '/audit?subscriptionId=' + d.subscriptionID; },
+      onError: function(e) { console.error('PayPal', e); }
+    }).render('#' + cid);
+  }
+
+  function renderAll() {
+    if (rendered) return;
+    rendered = true;
+    makeBtn(PLANS.proMo,  'paypal-pro-mo');
+    makeBtn(PLANS.proYr,  'paypal-pro-yr');
+    makeBtn(PLANS.premMo, 'paypal-prem-mo');
+    makeBtn(PLANS.premYr, 'paypal-prem-yr');
+  }
+
+  function waitPP() { window.paypal ? renderAll() : setTimeout(waitPP, 200); }
+  waitPP();
+
+  function setBilling(annual) {
+    isAnnual = annual;
+    var thumb = document.getElementById('toggle-thumb');
+    var track = document.getElementById('toggle');
+    var lmo   = document.getElementById('lbl-mo');
+    var lyr   = document.getElementById('lbl-yr');
+
+    if (thumb) thumb.style.left        = annual ? '27px' : '1px';
+    if (track) track.style.background  = annual ? '#0a7c6e' : '#d1d5db';
+    if (lmo)   lmo.style.color         = annual ? '#9ca3af' : '#0b1e3d';
+    if (lyr)   lyr.style.color         = annual ? '#0b1e3d' : '#9ca3af';
+
+    document.getElementById('pro-amt').textContent  = annual ? '$249' : '$299';
+    document.getElementById('prem-amt').textContent = annual ? '$666' : '$799';
+
+    ['pro-orig', 'prem-orig', 'pro-note', 'prem-note'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.toggle('hidden', !annual);
+    });
+
+    document.getElementById('paypal-pro-mo').classList.toggle('hidden', annual);
+    document.getElementById('paypal-pro-yr').classList.toggle('hidden', !annual);
+    document.getElementById('paypal-prem-mo').classList.toggle('hidden', annual);
+    document.getElementById('paypal-prem-yr').classList.toggle('hidden', !annual);
+  }
+
+  function toggleBilling() { setBilling(!isAnnual); }
+
+  function toggleFaq(btn) {
+    var body = btn.nextElementSibling;
+    var arr  = btn.querySelector('.faq-arr');
+    body.classList.toggle('hidden');
+    if (arr) arr.style.transform = body.classList.contains('hidden') ? '' : 'rotate(180deg)';
+  }
+
+  window.toggleBilling = toggleBilling;
+  window.setBilling    = setBilling;
+  window.toggleFaq     = toggleFaq;
+</script>
+
 </Layout>

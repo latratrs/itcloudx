@@ -16,6 +16,17 @@ const { metadata } = Astro.props;
 ---
 
 <Layout metadata={metadata}>
+  <!-- Dark mode fix: AstroWind injects class="dark" via JS after paint — block it site-wide -->
+  <script is:inline>
+    (function(){
+      var h=document.documentElement;
+      h.classList.remove('dark');
+      h.style.colorScheme='light';
+      new MutationObserver(function(){
+        if(h.classList.contains('dark')){h.classList.remove('dark');h.style.colorScheme='light';}
+      }).observe(h,{attributes:true,attributeFilter:['class']});
+    })();
+  </script>
   <slot name="announcement">
     <Announcement />
   </slot>

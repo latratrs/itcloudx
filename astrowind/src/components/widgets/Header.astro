@@ -33,11 +33,12 @@ try {
   // 2. HARDCODED FALLBACK
   links = [
     { text: 'Home', href: '/' },
-    { text: 'AI Services', href: '/services' },
-    { text: 'Use Cases', href: '#', links: [] }, 
-    { text: 'Blog', href: '/blog' },
-    { text: 'Contact', href: '/contact' },
+    { text: 'Free Audit', href: '/audit' },
+    { text: 'How It Works', href: '/#how-it-works' },
+    { text: 'Pricing', href: '/pricing' },
+    { text: 'Blog & News', href: '/blog' },
     { text: 'About Us', href: '/about' },
+    { text: 'Contact', href: '/contact' },
   ];
 }
 
@@ -103,10 +104,10 @@ const currentPath = `/${trimSlash(new URL(Astro.url).pathname)}`;
       <ToggleTheme iconClass="w-6 h-6 md:w-5 md:h-5" />
       
       <a 
-        href="/contact" 
-        class="btn-primary px-5 py-2 text-sm font-semibold rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 shadow-lg hover:shadow-blue-500/30"
+        href="/audit" 
+        class="btn-primary px-5 py-2 text-sm font-semibold rounded-full bg-teal-600 hover:bg-teal-700 text-white transition-all duration-200 shadow-lg hover:shadow-teal-500/30"
       >
-        Book A Call
+        Start Free Scan →
       </a>
     </div>
   </div>

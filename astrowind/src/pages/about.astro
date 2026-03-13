@@ -1,228 +1,143 @@
+export const prerender = true;
 ---
-import Features2 from '~/components/widgets/Features2.astro';
-import Features3 from '~/components/widgets/Features3.astro';
-import Hero from '~/components/widgets/Hero.astro';
-import Stats from '~/components/widgets/Stats.astro';
-import Steps2 from '~/components/widgets/Steps2.astro';
 import Layout from '~/layouts/PageLayout.astro';
+import { getPermalink } from '~/utils/permalinks';
 
 const metadata = {
-  title: 'About us',
+  title: 'About TradeShield AI – Los Angeles AI-Powered Trade Compliance',
+  description: 'Los Angeles-based startup building AI tools for HS code classification, real-time sanctions screening, tariff intelligence, and global trade compliance. Prevent costly customs fines with intelligent automation.',
+  ignoreTitleTemplate: true,
 };
 ---
 
 <Layout metadata={metadata}>
-  <!-- Hero Widget ******************* -->
+  <!-- Hero Section – matches homepage style -->
+  <section class="relative bg-[#0b1e3d] overflow-hidden">
+    <div class="absolute inset-0 opacity-10"
+      style="background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 40px 40px;">
+    </div>
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full opacity-20"
+      style="background: radial-gradient(ellipse, #0a7c6e 0%, transparent 70%);">
+    </div>
 
-  <Hero
-    tagline="About us"
-    image={{
-      src: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-      alt: 'Caos Image',
-    }}
-  >
-    <Fragment slot="title">
-      Elevate your online presence with our <br />
-      <span class="text-accent dark:text-white"> Beautiful Website Templates</span>
-    </Fragment>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 pt-24 pb-20 md:pt-32 md:pb-28 text-center">
+      <span class="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-[#f0a820] text-xs font-bold uppercase tracking-widest px-5 py-2 rounded-full mb-6">
+        <span class="w-2 h-2 rounded-full bg-[#f0a820] animate-pulse"></span>
+        Los Angeles AI Startup
+      </span>
 
-    <Fragment slot="subtitle">
-      Donec efficitur, ipsum quis congue luctus, mauris magna convallis mauris, eu auctor nisi lectus non augue. Donec
-      quis lorem non massa vulputate efficitur ac at turpis. Sed tincidunt ex a nunc convallis, et lobortis nisi tempus.
-      Suspendisse vitae nisi eget tortor luctus maximus sed non lectus.
-    </Fragment>
-  </Hero>
+      <h1 class="text-5xl md:text-7xl font-black text-white leading-tight tracking-tight">
+        About TradeShield AI
+      </h1>
 
-  <!-- Stats Widget ****************** -->
+      <p class="mt-8 text-xl md:text-2xl text-white/80 max-w-4xl mx-auto">
+        Building the future of trade compliance — intelligent, instant, and indispensable.
+      </p>
+    </div>
+  </section>
 
-  <Stats
-    title="Statistics about us"
-    stats={[
-      { title: 'Offices', amount: '4' },
-      { title: 'Employees', amount: '248' },
-      { title: 'Templates', amount: '12' },
-      { title: 'Awards', amount: '24' },
-    ]}
-  />
+  <!-- Who We Are -->
+  <section class="py-20 bg-white dark:bg-gray-950 transition-colors">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-6">
+          Who We Are
+        </h2>
+      </div>
 
-  <!-- Features3 Widget ************** -->
+      <div class="prose prose-lg md:prose-xl dark:prose-invert max-w-none mx-auto text-gray-700 dark:text-gray-300">
+        <p class="lead text-xl text-center mb-10">
+          TradeShield AI is a founder-led team in Los Angeles creating AI-native tools that solve real pain in global trade compliance.
+        </p>
 
-  <Features3
-    title="Our templates"
-    subtitle="Etiam scelerisque, enim eget vestibulum luctus, nibh mauris blandit nulla, nec vestibulum risus justo ut enim. Praesent lacinia diam et ante imperdiet euismod."
-    columns={3}
-    isBeforeContent={true}
-    items={[
-      {
-        title: 'Educational',
-        description:
-          'Morbi faucibus luctus quam, sit amet aliquet felis tempor id. Cras augue massa, ornare quis dignissim a, molestie vel nulla.',
-        icon: 'tabler:template',
-      },
-      {
-        title: 'Interior Design',
-        description:
-          'Vivamus porttitor, tortor convallis aliquam pretium, turpis enim consectetur elit, vitae egestas purus erat ac nunc nulla.',
-        icon: 'tabler:template',
-      },
-      {
-        title: 'Photography',
-        description:
-          'Duis sed lectus in nisl vehicula porttitor eget quis odio. Aliquam erat volutpat. Nulla eleifend nulla id sem fermentum.',
-        icon: 'tabler:template',
-      },
-    ]}
-  />
+        <p>
+          We live at the intersection of international regulations, supply chain complexity, and modern artificial intelligence. Our platform helps importers, e-commerce sellers, freight forwarders, and manufacturers avoid multimillion-dollar fines, shipment seizures, and compliance headaches — delivering broker-level accuracy in seconds, not days.
+        </p>
 
-  <!-- Features3 Widget ************** -->
+        <p>
+          Founded on the belief that compliance should be proactive, affordable, and invisible to growing businesses, we combine live regulatory data (CBP, OFAC, WCO, EU, UN) with powerful AI to turn complex rules into simple, actionable intelligence.
+        </p>
 
-  <Features3
-    columns={3}
-    isAfterContent={true}
-    items={[
-      {
-        title: 'E-commerce',
-        description:
-          'Rutrum non odio at vehicula. Proin ipsum justo, dignissim in vehicula sit amet, dignissim id quam. Sed ac tincidunt sapien.',
-        icon: 'tabler:template',
-      },
-      {
-        title: 'Blog',
-        description:
-          'Nullam efficitur volutpat sem sed fringilla. Suspendisse et enim eu orci volutpat laoreet ac vitae libero.',
-        icon: 'tabler:template',
-      },
-      {
-        title: 'Business',
-        description:
-          'Morbi et elit finibus, facilisis justo ut, pharetra ipsum. Donec efficitur, ipsum quis congue luctus, mauris magna.',
-        icon: 'tabler:template',
-      },
-      {
-        title: 'Branding',
-        description:
-          'Suspendisse vitae nisi eget tortor luctus maximus sed non lectus. Cras malesuada pretium placerat. Nullam venenatis dolor a ante rhoncus.',
-        icon: 'tabler:template',
-      },
-      {
-        title: 'Medical',
-        description:
-          'Vestibulum malesuada lacus id nibh posuere feugiat. Nam volutpat nulla a felis ultrices, id suscipit mauris congue. In hac habitasse platea dictumst.',
-        icon: 'tabler:template',
-      },
-      {
-        title: 'Fashion Design',
-        description:
-          'Maecenas eu tellus eget est scelerisque lacinia et a diam. Aliquam velit lorem, vehicula id fermentum et, rhoncus et purus.',
-        icon: 'tabler:template',
-      },
-    ]}
-    image={{
-      src: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80',
-      alt: 'Colorful Image',
-    }}
-  />
+        <p class="font-semibold text-center mt-10 text-lg">
+          Small team. Direct founder access. Big impact on your bottom line.
+        </p>
+      </div>
+    </div>
+  </section>
 
-  <!-- Steps2 Widget ****************** -->
+  <!-- What We Solve -->
+  <section class="py-20 bg-gradient-to-b from-white to-[#f7f5f0] dark:from-gray-950 dark:to-gray-900 transition-colors">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-6">
+          What We Solve
+        </h2>
+        <p class="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+          Trade compliance is broken — slow, expensive, and error-prone. We fix it with AI that thinks like an expert customs broker, but works 24/7 at a fraction of the cost.
+        </p>
+      </div>
 
-  <Steps2
-    title="Our values"
-    subtitle="Maecenas eu tellus eget est scelerisque lacinia et a diam. Aliquam velit lorem, vehicula id fermentum et, rhoncus et purus. Nulla facilisi. Vestibulum malesuada lacus."
-    items={[
-      {
-        title: 'Customer-centric approach',
-        description:
-          'Donec id nibh neque. Quisque et fermentum tortor. Fusce vitae dolor a mauris dignissim commodo. Ut eleifend luctus condimentum.',
-      },
-      {
-        title: 'Constant Improvement',
-        description:
-          'Phasellus laoreet fermentum venenatis. Vivamus dapibus pulvinar arcu eget mattis. Fusce eget mauris leo.',
-      },
-      {
-        title: 'Ethical Practices',
-        description:
-          'Vestibulum imperdiet libero et lectus molestie, et maximus augue porta. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.',
-      },
-    ]}
-  />
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300">
+          <div class="w-16 h-16 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center text-4xl mb-6 mx-auto">
+            🔍
+          </div>
+          <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">
+            HS Code Classification
+          </h3>
+          <p class="text-gray-700 dark:text-gray-300 text-center">
+            Accurate, up-to-date codes against live CBP & WCO databases — preventing misclassification fines up to $1M+ per violation.
+          </p>
+        </div>
 
-  <!-- Steps2 Widget ****************** -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300">
+          <div class="w-16 h-16 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center text-4xl mb-6 mx-auto">
+            🛡️
+          </div>
+          <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">
+            Sanctions & Denied Party Screening
+          </h3>
+          <p class="text-gray-700 dark:text-gray-300 text-center">
+            Real-time OFAC, UN, EU & global list checks — protecting your supply chain from compliance risk and reputational damage.
+          </p>
+        </div>
 
-  <Steps2
-    title="Achievements"
-    subtitle="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi sagittis, quam nec venenatis lobortis, mi risus tempus nulla, sed porttitor est nibh at nulla."
-    isReversed={true}
-    callToAction={{
-      text: 'See more',
-      href: '/',
-    }}
-    items={[
-      {
-        title: 'Global reach',
-        description: 'Nam malesuada urna in enim imperdiet tincidunt. Phasellus non tincidunt nisi, at elementum mi.',
-        icon: 'tabler:globe',
-      },
-      {
-        title: 'Positive customer feedback and reviews',
-        description:
-          'Cras semper nulla leo, eget laoreet erat cursus sed. Praesent faucibus massa in purus iaculis dictum.',
-        icon: 'tabler:message-star',
-      },
-      {
-        title: 'Awards and recognition as industry experts',
-        description:
-          'Phasellus lacinia cursus velit, eu malesuada magna pretium eu. Etiam aliquet tellus purus, blandit lobortis ex rhoncus vitae.',
-        icon: 'tabler:award',
-      },
-    ]}
-  />
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300">
+          <div class="w-16 h-16 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center text-4xl mb-6 mx-auto">
+            📈
+          </div>
+          <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">
+            Tariff & Risk Intelligence
+          </h3>
+          <p class="text-gray-700 dark:text-gray-300 text-center">
+            Layered duty analysis (301, 232, 122, AD/CVD, UFLPA) + risk scoring — so you ship smarter and avoid delays & detention fees.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  <!-- Features2 Widget ************** -->
+  <!-- CTA -->
+  <section class="py-20 bg-[#0b1e3d] text-white text-center">
+    <div class="max-w-4xl mx-auto px-6">
+      <h2 class="text-3xl md:text-5xl font-black mb-6 leading-tight">
+        Ready to Stop Compliance Risks?
+      </h2>
+      <p class="text-xl md:text-2xl opacity-90 mb-10">
+        Run a free scan today — 60 seconds could save you $1,000,000 in fines and delays.
+      </p>
 
-  <Features2
-    title="Our locations"
-    tagline="Find us"
-    columns={4}
-    items={[
-      {
-        title: 'EE.UU',
-        description: '1234 Lorem Ipsum St, 12345, Miami',
-      },
-      {
-        title: 'Spain',
-        description: '5678 Lorem Ipsum St, 56789, Madrid',
-      },
-      {
-        title: 'Australia',
-        description: '9012 Lorem Ipsum St, 90123, Sydney',
-      },
-      {
-        title: 'Brazil',
-        description: '3456 Lorem Ipsum St, 34567, São Paulo',
-      },
-    ]}
-  />
+      <a 
+        href="/audit"
+        class="inline-flex items-center gap-4 bg-[#0a7c6e] hover:bg-[#0d9485] text-white font-black text-xl px-12 py-6 rounded-2xl shadow-2xl transition-all hover:scale-105"
+      >
+        Start Free Compliance Scan →
+        <span class="text-2xl">⚡</span>
+      </a>
 
-  <!-- Features2 Widget ************** -->
-
-  <Features2
-    title="Technical Support"
-    tagline="Contact us"
-    columns={2}
-    items={[
-      {
-        title: 'Chat with us',
-        description:
-          'Integer luctus laoreet libero, auctor varius purus rutrum sit amet. Ut nec molestie nisi, quis eleifend mi.',
-        icon: 'tabler:messages',
-      },
-      {
-        title: 'Call us',
-        description:
-          'Mauris faucibus finibus orci, in posuere elit viverra non. In hac habitasse platea dictumst. Cras lobortis metus a hendrerit congue.',
-        icon: 'tabler:headset',
-      },
-    ]}
-  />
+      <p class="mt-8 text-white/60 text-sm">
+        No credit card • First 5 scans free • Powered by Deccod
+      </p>
+    </div>
+  </section>
 </Layout>

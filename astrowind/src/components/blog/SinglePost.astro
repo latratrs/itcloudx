@@ -1,14 +1,13 @@
 ---
 import { Icon } from 'astro-icon/components';
-
-import Image from '~/components/common/Image.astro';
 import PostTags from '~/components/blog/Tags.astro';
-import SocialShare from '~/components/common/SocialShare.astro';
 
 import { getPermalink } from '~/utils/permalinks';
 import { getFormattedDate } from '~/utils/utils';
+import { findImage } from '~/utils/images';
 
 import type { Post } from '~/types';
+import defaultPostImg from '~/assets/images/TradeShield-AI.jpg';
 
 export interface Props {
   post: Post;
@@ -16,88 +15,202 @@ export interface Props {
 }
 
 const { post, url } = Astro.props;
+const resolvedPostImg = (await findImage(post.image)) ?? defaultPostImg;
+
+// Build a safe absolute URL string for social share targets
+const pageUrl  = typeof url === 'string' ? url : url.toString();
+const encoded  = encodeURIComponent(pageUrl);
+const titleEnc = encodeURIComponent(post.title ?? '');
+
+const shareLinks = [
+  { icon: 'tabler:brand-x',        label: 'Share on X',        href: `https://twitter.com/intent/tweet?url=${encoded}&text=${titleEnc}` },
+  { icon: 'tabler:brand-linkedin', label: 'Share on LinkedIn',  href: `https://www.linkedin.com/sharing/share-offsite/?url=${encoded}` },
+  { icon: 'tabler:brand-facebook', label: 'Share on Facebook',  href: `https://www.facebook.com/sharer/sharer.php?u=${encoded}` },
+  { icon: 'tabler:mail',           label: 'Share via Email',    href: `mailto:?subject=${titleEnc}&body=${encoded}` },
+  { icon: 'tabler:link',           label: 'Copy link',          href: '#', id: 'tsCopyLink' },
+];
+
+// Resolved image src string for CSS background-image
+const heroBg = resolvedPostImg && typeof resolvedPostImg !== 'string'
+  ? (resolvedPostImg as any).src
+  : (resolvedPostImg as string | undefined) ?? defaultPostImg.src;
 ---
 
-<section class="py-8 sm:py-16 lg:py-20 mx-auto">
-  <article>
-    <header
-      class={post.image
-        ? 'intersect-once intersect-quarter motion-safe:md:opacity-0 motion-safe:md:intersect:animate-fade'
-        : 'intersect-once intersect-quarter motion-safe:md:opacity-0 motion-safe:md:intersect:animate-fade'}
-    >
-      <div class="flex justify-between flex-col sm:flex-row max-w-3xl mx-auto mt-0 mb-2 px-4 sm:px-6 sm:items-center">
-        <p>
-          <Icon name="tabler:clock" class="w-4 h-4 inline-block -mt-0.5 dark:text-gray-400" />
-          <time datetime={String(post.publishDate)} class="inline-block">{getFormattedDate(post.publishDate)}</time>
-          {
-            post.author && (
-              <>
-                {' '}
-                · <Icon name="tabler:user" class="w-4 h-4 inline-block -mt-0.5 dark:text-gray-400" />
-                <span class="inline-block">{post.author}</span>
-              </>
-            )
-          }
-          {
-            post.category && (
-              <>
-                {' '}
-                ·{' '}
-                <a class="hover:underline inline-block" href={getPermalink(post.category.slug, 'category')}>
-                  {post.category.title}
-                </a>
-              </>
-            )
-          }
-          {
-            post.readingTime && (
-              <>
-                &nbsp;· <span>{post.readingTime}</span> min read
-              </>
-            )
-          }
-        </p>
+<!-- ══════════════════════════════════════════════════════════════════════════
+     HERO — edge-to-edge background image with navy gradient overlay
+══════════════════════════════════════════════════════════════════════════════ -->
+<header
+  class="relative w-full overflow-hidden"
+  style={`background-image:url('${heroBg}');background-size:cover;background-position:center;min-height:420px`}
+>
+  <!-- Gradient overlay -->
+  <div class="absolute inset-0" style="background:linear-gradient(to bottom,rgba(3,10,20,.55) 0%,rgba(11,30,61,.82) 55%,rgba(3,10,20,.97) 100%)"></div>
+
+  <!-- Content over overlay -->
+  <div class="relative z-10 max-w-7xl mx-auto px-6 py-16 flex flex-col justify-end" style="min-height:420px">
+    <!-- Category + meta row -->
+    <div class="flex flex-wrap items-center gap-3 mb-5">
+      {post.category && (
+        <a href={getPermalink(post.category.slug, 'category')}
+           style="font-size:11px;font-weight:800;letter-spacing:.1em;color:#34d399;background:#34d39912;border:1px solid #34d39935;padding:3px 12px;border-radius:20px;text-transform:uppercase;text-decoration:none">
+          {post.category.title}
+        </a>
+      )}
+      <span style="font-size:12px;color:#94a3b8;font-family:monospace;display:flex;align-items:center;gap:4px">
+        <Icon name="tabler:clock" class="w-3.5 h-3.5" />
+        <time datetime={String(post.publishDate)}>{getFormattedDate(post.publishDate)}</time>
+      </span>
+      {post.author && (
+        <span style="font-size:12px;color:#94a3b8;font-family:monospace;display:flex;align-items:center;gap:4px">
+          <Icon name="tabler:user" class="w-3.5 h-3.5" />
+          {post.author}
+        </span>
+      )}
+      {post.readingTime && (
+        <span style="font-size:12px;color:#94a3b8;font-family:monospace">{post.readingTime} min read</span>
+      )}
+    </div>
+
+    <!-- Title -->
+    <h1 style="font-size:clamp(26px,4vw,52px);font-weight:900;color:#f1f5f9;line-height:1.12;letter-spacing:-.02em;max-width:860px">
+      {post.title}
+    </h1>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     3-COLUMN BODY  (col-2 / col-7 / col-3)
+══════════════════════════════════════════════════════════════════════════════ -->
+<div style="background:#050d1a;border-top:1px solid #1e3a5f">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid grid-cols-12 gap-8 items-start">
+
+    <!-- ── LEFT: sticky social share (col-span-2) ─────────────────────────── -->
+    <aside class="hidden lg:flex col-span-2 flex-col items-center gap-4" style="position:sticky;top:88px">
+      <span style="font-size:9px;font-weight:800;letter-spacing:.14em;color:#334155;text-transform:uppercase;writing-mode:vertical-rl;transform:rotate(180deg);margin-bottom:8px">Share</span>
+      {shareLinks.map(s => (
+        <a
+          href={s.href}
+          id={s.id}
+          aria-label={s.label}
+          target={s.href.startsWith('http') ? '_blank' : undefined}
+          rel={s.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+          style="width:40px;height:40px;border-radius:50%;background:#0d1b2e;border:1px solid #1e3a5f;display:flex;align-items:center;justify-content:center;color:#475569;transition:border-color .15s,color .15s,background .15s"
+          onmouseover="this.style.background='#0a7c6e20';this.style.borderColor='#0a7c6e';this.style.color='#34d399'"
+          onmouseout="this.style.background='#0d1b2e';this.style.borderColor='#1e3a5f';this.style.color='#475569'"
+        >
+          <Icon name={s.icon} class="w-4.5 h-4.5" />
+        </a>
+      ))}
+      <div style="width:1px;height:48px;background:linear-gradient(to bottom,#1e3a5f,transparent);margin-top:4px"></div>
+    </aside>
+
+    <!-- ── CENTER: article body (col-span-7 desktop, full on mobile) ───────── -->
+    <main class="col-span-12 lg:col-span-7">
+
+      <!-- Key Takeaways box -->
+      {post.excerpt && (
+        <div style="background:linear-gradient(135deg,#0a7c6e18,#0b1e3d40);border:1px solid #0a7c6e40;border-left:4px solid #0a7c6e;border-radius:12px;padding:24px 28px;margin-bottom:36px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+            <span style="width:8px;height:8px;border-radius:50%;background:#34d399;flex-shrink:0"></span>
+            <span style="font-size:11px;font-weight:800;letter-spacing:.12em;color:#34d399;text-transform:uppercase">Key Takeaways</span>
+          </div>
+          <p style="font-size:15px;line-height:1.7;color:#94a3b8;margin:0">{post.excerpt}</p>
+        </div>
+      )}
+
+      <!-- Article prose -->
+      <div
+        class="prose prose-lg lg:prose-xl dark:prose-invert
+               prose-headings:font-heading prose-headings:leading-tight prose-headings:tracking-tight prose-headings:font-bold
+               prose-a:text-[#0fb39d] dark:prose-a:text-[#0fb39d]
+               prose-img:rounded-xl prose-img:shadow-lg
+               prose-headings:scroll-mt-24 prose-li:my-0
+               prose-headings:text-slate-100 prose-p:text-slate-300 prose-li:text-slate-300 prose-strong:text-slate-100"
+        style="max-width:none"
+      >
+        <slot />
       </div>
 
-      <h1
-        class="px-4 sm:px-6 max-w-3xl mx-auto text-4xl md:text-5xl font-bold leading-tighter tracking-tighter font-heading"
-      >
-        {post.title}
-      </h1>
-      <p
-        class="max-w-3xl mx-auto mt-4 mb-8 px-4 sm:px-6 text-xl md:text-2xl text-muted dark:text-slate-400 text-justify"
-      >
-        {post.excerpt}
-      </p>
+      <!-- Tags row -->
+      {post.tags && post.tags.length > 0 && (
+        <div style="margin-top:40px;padding-top:24px;border-top:1px solid #1e3a5f;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+          <span style="font-size:11px;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:.08em;margin-right:4px">Tags:</span>
+          <PostTags tags={post.tags} />
+        </div>
+      )}
 
-      {
-        post.image ? (
-          <Image
-            src={post.image}
-            class="max-w-full lg:max-w-[900px] mx-auto mb-6 sm:rounded-md bg-gray-400 dark:bg-slate-700"
-            widths={[400, 900]}
-            sizes="(max-width: 900px) 400px, 900px"
-            alt={post?.excerpt || ''}
-            width={900}
-            height={506}
-            loading="eager"
-            decoding="async"
-          />
-        ) : (
-          <div class="max-w-3xl mx-auto px-4 sm:px-6">
-            <div class="border-t dark:border-slate-700" />
-          </div>
-        )
-      }
-    </header>
-    <div
-      class="mx-auto px-6 sm:px-6 max-w-3xl prose prose-md lg:prose-xl dark:prose-invert dark:prose-headings:text-slate-300 prose-headings:font-heading prose-headings:leading-tighter prose-headings:tracking-tighter prose-headings:font-bold prose-a:text-primary dark:prose-a:text-blue-400 prose-img:rounded-md prose-img:shadow-lg mt-8 prose-headings:scroll-mt-[80px] prose-li:my-0"
-    >
-      <slot />
-    </div>
-    <div class="mx-auto px-6 sm:px-6 max-w-3xl mt-8 flex justify-between flex-col sm:flex-row">
-      <PostTags tags={post.tags} class="mr-5 rtl:mr-0 rtl:ml-5" />
-      <SocialShare url={url} text={post.title} class="mt-5 sm:mt-1 align-middle text-gray-500 dark:text-slate-600" />
-    </div>
-  </article>
-</section>
+      <!-- Mobile share row -->
+      <div class="flex lg:hidden items-center gap-3 mt-8 flex-wrap">
+        <span style="font-size:11px;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:.08em">Share:</span>
+        {shareLinks.map(s => (
+          <a href={s.href}
+             aria-label={s.label}
+             target={s.href.startsWith('http') ? '_blank' : undefined}
+             rel={s.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+             style="width:36px;height:36px;border-radius:50%;background:#0d1b2e;border:1px solid #1e3a5f;display:flex;align-items:center;justify-content:center;color:#475569">
+            <Icon name={s.icon} class="w-4 h-4" />
+          </a>
+        ))}
+      </div>
+    </main>
+
+    <!-- ── RIGHT: sticky sidebar CTA (col-span-3 desktop) ─────────────────── -->
+    <aside class="hidden lg:block col-span-3" style="position:sticky;top:88px">
+
+      <!-- Free Audit CTA card -->
+      <div style="background:linear-gradient(135deg,#0b1e3d,#0d2847);border:1px solid #1e3a5f;border-radius:16px;padding:28px;margin-bottom:24px">
+        <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#0a7c6e,#0fb39d);display:flex;align-items:center;justify-content:center;margin-bottom:16px">
+          <Icon name="tabler:shield-check" class="w-6 h-6" style="color:#fff" />
+        </div>
+        <h3 style="font-size:17px;font-weight:800;color:#f1f5f9;line-height:1.3;margin-bottom:10px">
+          Free Compliance Audit
+        </h3>
+        <p style="font-size:13px;color:#64748b;line-height:1.6;margin-bottom:20px">
+          Scan your shipment documents for HS code errors, OFAC sanctions exposure, and tariff risks — in 60 seconds.
+        </p>
+        <a href="/audit"
+           style="display:block;text-align:center;background:linear-gradient(135deg,#0a7c6e,#0b5e52);color:#fff;font-weight:800;font-size:14px;padding:13px 20px;border-radius:10px;text-decoration:none;letter-spacing:.02em;box-shadow:0 4px 20px #0a7c6e40;transition:box-shadow .2s"
+           onmouseover="this.style.boxShadow='0 6px 28px #0a7c6e70'"
+           onmouseout="this.style.boxShadow='0 4px 20px #0a7c6e40'">
+          ✦ Run Free AI Trade Audit
+        </a>
+        <p style="font-size:11px;color:#334155;text-align:center;margin-top:10px">No credit card · 5 free scans/month</p>
+      </div>
+
+      <!-- Pricing nudge -->
+      <div style="background:#0d1b2e;border:1px solid #1e3a5f;border-radius:12px;padding:20px">
+        <p style="font-size:11px;font-weight:700;color:#34d399;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">Professional Plan</p>
+        <p style="font-size:22px;font-weight:900;color:#f1f5f9;margin-bottom:4px">$249<span style="font-size:13px;font-weight:400;color:#475569">/mo</span></p>
+        <p style="font-size:12px;color:#475569;margin-bottom:16px">500 audits · Unlimited HS lookups · OFAC screening</p>
+        <a href="/pricing"
+           style="display:block;text-align:center;background:transparent;color:#0fb39d;font-weight:700;font-size:13px;padding:10px 16px;border-radius:8px;border:1px solid #0a7c6e50;text-decoration:none;transition:background .15s"
+           onmouseover="this.style.background='#0a7c6e15'"
+           onmouseout="this.style.background='transparent'">
+          View all plans →
+        </a>
+      </div>
+
+    </aside>
+  </div>
+</div>
+
+<script is:inline>
+// Copy-link button
+(function () {
+  var btn = document.getElementById('tsCopyLink');
+  if (!btn) return;
+  btn.addEventListener('click', function (e) {
+    e.preventDefault();
+    navigator.clipboard.writeText(window.location.href).then(function () {
+      btn.setAttribute('aria-label', 'Link copied!');
+      btn.style.color     = '#34d399';
+      btn.style.borderColor = '#34d399';
+      setTimeout(function () {
+        btn.setAttribute('aria-label', 'Copy link');
+        btn.style.color       = '#475569';
+        btn.style.borderColor = '#1e3a5f';
+      }, 2000);
+    });
+  });
+})();
+</script>

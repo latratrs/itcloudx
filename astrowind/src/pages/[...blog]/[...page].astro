@@ -1,52 +1,273 @@
 ---
 import type { InferGetStaticPropsType, GetStaticPaths } from 'astro';
-
 import Layout from '~/layouts/PageLayout.astro';
-import BlogList from '~/components/blog/List.astro';
-import Headline from '~/components/blog/Headline.astro';
 import Pagination from '~/components/blog/Pagination.astro';
-// import PostTags from "~/components/blog/Tags.astro";
-
 import { blogListRobots, getStaticPathsBlogList } from '~/utils/blog';
-
+import { findImage } from '~/utils/images';
+import defaultImg from '~/assets/images/TradeShield-AI.jpg';
 export const prerender = true;
-
 export const getStaticPaths = (async ({ paginate }) => {
   return await getStaticPathsBlogList({ paginate });
 }) satisfies GetStaticPaths;
-
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
-
 const { page } = Astro.props as Props;
 const currentPage = page.currentPage ?? 1;
-
-// const allCategories = await findCategories();
-// const allTags = await findTags();
-
 const metadata = {
-  title: `Blog${currentPage > 1 ? ` — Page ${currentPage}` : ''}`,
-  robots: {
-    index: blogListRobots?.index && currentPage === 1,
-    follow: blogListRobots?.follow,
-  },
-  openGraph: {
-    type: 'blog',
-  },
+  title: `Trade Compliance Intelligence${currentPage > 1 ? ` — Page ${currentPage}` : ''} | TradeShield AI`,
+  description: 'Real-time sanctions, export controls, tariffs and enforcement intelligence for importers, exporters and freight professionals.',
+  robots: { index: blogListRobots?.index && currentPage === 1, follow: blogListRobots?.follow },
+  openGraph: { type: 'blog' },
 };
+const posts = page.data;
+// Pre-resolve ~/assets/... image paths to real browser-safe URLs at build time
+const resolvedImgSrc = new Map<string, string>();
+await Promise.all(posts.map(async p => {
+  const img = await findImage(p.image);
+  resolvedImgSrc.set(p.id, img && typeof img !== 'string' ? (img as any).src : (img as string | undefined) ?? defaultImg.src);
+}));
 ---
-
 <Layout metadata={metadata}>
-  <section class="px-6 sm:px-6 py-12 sm:py-16 lg:py-20 mx-auto max-w-4xl">
-    <Headline
-      subtitle="A statically generated blog example with news, tutorials, resources and other interesting content related to AstroWind"
-    >
-      The Blog
-    </Headline>
-    <BlogList posts={page.data} />
-    <Pagination prevUrl={page.url.prev} nextUrl={page.url.next} />
-    <!--
-      <PostTags tags={allCategories} class="mb-2" title="Search by Categories:" isCategory />
-      <PostTags tags={allTags}  title="Search by Tags:" />
-    -->
-  </section>
+
+<!-- ═══ HERO ═══ -->
+<section style="background:linear-gradient(135deg,#030a14 0%,#0b1e3d 60%,#0a7c6e18 100%);padding:72px 24px 48px;text-align:center;position:relative;overflow:hidden">
+  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none"></div>
+  <div style="position:relative;max-width:720px;margin:0 auto">
+    <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.12em;color:#34d399;background:#34d39912;border:1px solid #34d39935;padding:5px 14px;border-radius:20px;margin-bottom:20px">
+      <span style="width:6px;height:6px;border-radius:50%;background:#34d399;animation:tspulse 2s infinite"></span>
+      LIVE INTELLIGENCE FEED
+    </span>
+    <h1 style="font-size:clamp(32px,5vw,52px);font-weight:900;color:#f1f5f9;line-height:1.12;margin-bottom:16px;letter-spacing:-.02em">
+      TradeShield AI<br>Compliance Intelligence
+    </h1>
+    <p style="color:#64748b;font-size:16px;max-width:500px;margin:0 auto 32px;line-height:1.6">
+      Sanctions · Export Controls · Tariffs · Enforcement — real-time intelligence for importers, exporters and freight professionals.
+    </p>
+    <button id="tsAiBtn" onclick="tsGetNews()"
+      style="background:linear-gradient(135deg,#0a7c6e,#0b5e52);color:#fff;font-weight:800;font-size:15px;padding:15px 36px;border-radius:12px;border:none;cursor:pointer;letter-spacing:.02em;box-shadow:0 4px 32px #0a7c6e50;transition:all .2s">
+      ✦ Fetch Live AI News
+    </button>
+    <div id="tsStatus" style="display:none;margin-top:16px;font-size:12px;font-family:monospace;color:#60a5fa">
+      ⚙ Scanning OFAC · DOJ · CBP · BIS · EU · Shipping feeds…
+    </div>
+  </div>
+</section>
+
+<!-- ═══ BREAKING TICKER ═══ -->
+<div id="tsTicker" style="display:none;background:#0f1f38;border-top:1px solid #1e3a5f;border-bottom:1px solid #1e3a5f;padding:10px 24px">
+  <div style="max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:12px">
+    <span style="font-size:10px;font-weight:800;color:#f87171;background:#f8717118;border:1px solid #f8717140;padding:3px 8px;border-radius:4px;white-space:nowrap;flex-shrink:0">⚡ BREAKING</span>
+    <div id="tsTickerText" style="font-size:12px;color:#94a3b8;font-family:monospace;overflow:hidden;white-space:nowrap;text-overflow:ellipsis"></div>
+    <a id="tsTickerLink" href="#" target="_blank" style="font-size:11px;color:#0a7c6e;white-space:nowrap;flex-shrink:0;font-weight:700">Read →</a>
+  </div>
+</div>
+
+<!-- ═══ CATEGORY FILTERS ═══ -->
+<div id="tsCats" style="display:none;background:#050d1a;border-bottom:1px solid #1e3a5f;padding:16px 24px">
+  <div style="max-width:1200px;margin:0 auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <span style="font-size:11px;color:#334155;font-weight:600;margin-right:4px">Filter:</span>
+    <button onclick="filterCat('all')" data-cat="all" style="font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;border:1px solid #0a7c6e;background:#0a7c6e20;color:#34d399;cursor:pointer">All</button>
+    <button onclick="filterCat('SANCTIONS')" data-cat="SANCTIONS" style="font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;border:1px solid #1e3a5f;background:transparent;color:#64748b;cursor:pointer">🚨 Sanctions</button>
+    <button onclick="filterCat('ENFORCEMENT')" data-cat="ENFORCEMENT" style="font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;border:1px solid #1e3a5f;background:transparent;color:#64748b;cursor:pointer">⚖️ Enforcement</button>
+    <button onclick="filterCat('FORCED LABOR')" data-cat="FORCED LABOR" style="font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;border:1px solid #1e3a5f;background:transparent;color:#64748b;cursor:pointer">🔴 Forced Labor</button>
+    <button onclick="filterCat('TARIFFS')" data-cat="TARIFFS" style="font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;border:1px solid #1e3a5f;background:transparent;color:#64748b;cursor:pointer">💰 Tariffs</button>
+    <button onclick="filterCat('AD/CVD')" data-cat="AD/CVD" style="font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;border:1px solid #1e3a5f;background:transparent;color:#64748b;cursor:pointer">📋 AD/CVD</button>
+    <button onclick="filterCat('EXPORT CONTROLS')" data-cat="EXPORT CONTROLS" style="font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;border:1px solid #1e3a5f;background:transparent;color:#64748b;cursor:pointer">🔒 Export Controls</button>
+    <button onclick="filterCat('SHIPPING')" data-cat="SHIPPING" style="font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;border:1px solid #1e3a5f;background:transparent;color:#64748b;cursor:pointer">🚢 Shipping</button>
+    <button onclick="filterCat('CUSTOMS FILING')" data-cat="CUSTOMS FILING" style="font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;border:1px solid #1e3a5f;background:transparent;color:#64748b;cursor:pointer">📑 Customs</button>
+    <button onclick="filterCat('CHINA TRADE')" data-cat="CHINA TRADE" style="font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;border:1px solid #1e3a5f;background:transparent;color:#64748b;cursor:pointer">🌏 China</button>
+    <button onclick="filterCat('EU REGULATION')" data-cat="EU REGULATION" style="font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;border:1px solid #1e3a5f;background:transparent;color:#64748b;cursor:pointer">🌿 EU/CBAM</button>
+  </div>
+</div>
+
+<!-- ═══ LIVE NEWS GRID ═══ -->
+<section style="background:#030a14;padding:32px 24px 48px">
+  <div style="max-width:1200px;margin:0 auto">
+    <div id="tsPlaceholder" style="text-align:center;padding:48px 24px">
+      <div style="font-size:48px;margin-bottom:12px;opacity:.3">📡</div>
+      <p style="font-size:14px;color:#334155">Click <strong style="color:#0a7c6e">Fetch Live AI News</strong> above to load real-time compliance intelligence</p>
+    </div>
+    <div id="tsResults" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px"></div>
+    <div id="tsEmpty" style="display:none;text-align:center;padding:48px;color:#334155">
+      <p>No articles in this category. Try a different filter.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PUBLISHED BLOG POSTS ═══ -->
+<section style="background:#050d1a;border-top:1px solid #1e3a5f;padding:56px 24px 72px">
+  <div style="max-width:1200px;margin:0 auto">
+    <div style="margin-bottom:36px">
+      <span style="font-size:11px;font-weight:700;color:#34d399;letter-spacing:.1em;text-transform:uppercase">Published Articles</span>
+      <h2 style="font-size:30px;font-weight:900;color:#f1f5f9;margin-top:6px;letter-spacing:-.01em">Latest Intelligence Briefs</h2>
+      <p style="color:#475569;font-size:14px;margin-top:6px">AI-generated weekly briefings on global trade regulation</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px">
+      {posts.map(post => (
+        <a href={`/${post.permalink}`}
+          style="text-decoration:none;display:flex;flex-direction:column;border-radius:16px;overflow:hidden;background:#0d1b2e;border:1px solid rgba(255,255,255,0.06);transition:transform .15s,border-color .15s,box-shadow .15s"
+          onmouseover="this.style.transform='translateY(-4px)';this.style.borderColor='#0a7c6e50';this.style.boxShadow='0 8px 32px #0a7c6e20'"
+          onmouseout="this.style.transform='';this.style.borderColor='rgba(255,255,255,0.06)';this.style.boxShadow='none'">
+          <div style="aspect-ratio:16/7;overflow:hidden;background:#0b1e3d;flex-shrink:0">
+            <img src={resolvedImgSrc.get(post.id) ?? defaultImg.src}
+                 alt={post.title}
+                 style="width:100%;height:100%;object-fit:cover;opacity:.85"
+                 loading="lazy" />
+          </div>
+          <div style="padding:20px;display:flex;flex-direction:column;flex:1">
+            {post.category && (
+              <span style="font-size:10px;font-weight:700;letter-spacing:.1em;color:#34d399;background:#34d39912;border:1px solid #34d39930;padding:2px 8px;border-radius:4px;text-transform:uppercase;width:fit-content;margin-bottom:10px">
+                {typeof post.category === 'string' ? post.category : (post.category as any).title}
+              </span>
+            )}
+            <h3 style="font-size:15px;font-weight:800;color:#f1f5f9;line-height:1.4;flex:1;margin-bottom:10px">{post.title}</h3>
+            <p style="font-size:12px;color:#475569;line-height:1.55;margin-bottom:16px">
+              {post.excerpt ? (post.excerpt.length > 120 ? post.excerpt.slice(0,120) + '…' : post.excerpt) : ''}
+            </p>
+            <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid #1e3a5f;padding-top:12px">
+              <span style="font-size:11px;color:#334155;font-family:monospace">
+                {post.publishDate ? new Date(post.publishDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : ''}
+              </span>
+              <span style="font-size:11px;color:#0a7c6e;font-weight:700">Read article →</span>
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+    <div style="margin-top:40px">
+      <Pagination prevUrl={page.url.prev} nextUrl={page.url.next} />
+    </div>
+  </div>
+</section>
+
+<script is:inline>
+let allCards = [];
+let activeFilter = 'all';
+
+async function tsGetNews() {
+  const btn = document.getElementById('tsAiBtn');
+  const status = document.getElementById('tsStatus');
+  const placeholder = document.getElementById('tsPlaceholder');
+  btn.disabled = true;
+  btn.style.opacity = '.6';
+  btn.innerHTML = '<span style="display:inline-block;animation:tsspin 1s linear infinite">⚙</span> Scanning feeds…';
+  status.style.display = 'block';
+  if (placeholder) placeholder.style.display = 'none';
+
+  const queries = [
+    { q: 'OFAC+sanctions+penalty+fine+2026',             cat: 'SANCTIONS',       col: '#f87171', icon: '🚨' },
+    { q: 'DOJ+trade+fraud+tariff+evasion+criminal+2026', cat: 'ENFORCEMENT',     col: '#fb923c', icon: '⚖️' },
+    { q: 'UFLPA+forced+labor+CBP+detention+2026',        cat: 'FORCED LABOR',    col: '#f87171', icon: '🔴' },
+    { q: 'US+tariffs+Section+301+import+duties+2026',    cat: 'TARIFFS',         col: '#fbbf24', icon: '💰' },
+    { q: 'anti-dumping+countervailing+duty+ruling+2026', cat: 'AD/CVD',          col: '#fbbf24', icon: '📋' },
+    { q: 'BIS+export+controls+China+chips+2026',         cat: 'EXPORT CONTROLS', col: '#60a5fa', icon: '🔒' },
+    { q: 'Red+Sea+shipping+disruption+freight+2026',     cat: 'SHIPPING',        col: '#818cf8', icon: '🚢' },
+    { q: 'CBP+HTS+customs+classification+filing+2026',   cat: 'CUSTOMS FILING',  col: '#34d399', icon: '📑' },
+    { q: 'China+retaliatory+tariff+trade+policy+2026',   cat: 'CHINA TRADE',     col: '#38bdf8', icon: '🌏' },
+    { q: 'EU+CBAM+carbon+border+adjustment+2026',        cat: 'EU REGULATION',   col: '#a78bfa', icon: '🌿' },
+  ];
+
+  allCards = [];
+  for (const q of queries) {
+    try {
+      const rssUrl = 'https://news.google.com/rss/search?q=' + q.q + '&hl=en-US&gl=US&ceid=US:en';
+      const proxy = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl) + '&count=1';
+      const res = await fetch(proxy);
+      const data = await res.json();
+      const item = data.items && data.items[0];
+      if (!item) continue;
+      const pubDate = new Date(item.pubDate);
+      const daysAgo = Math.floor((Date.now() - pubDate) / 86400000);
+      const freshness = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : daysAgo + 'd ago';
+      const impact = daysAgo < 3 ? 'HIGH' : daysAgo < 10 ? 'MEDIUM' : 'LOW';
+      const impCol = impact === 'HIGH' ? '#f87171' : impact === 'MEDIUM' ? '#fbbf24' : '#34d399';
+      const tmp = document.createElement('div');
+      tmp.innerHTML = item.description || item.title;
+      const raw = tmp.textContent.trim();
+      const summary = raw.length > 160 ? raw.slice(0, 157) + '…' : raw;
+      let source = '';
+      try { source = new URL(item.link).hostname.replace('www.', ''); } catch(e) {}
+      allCards.push({ cat: q.cat, col: q.col, icon: q.icon, title: item.title, summary: summary, impact: impact, impCol: impCol, freshness: freshness, link: item.link, source: source });
+    } catch(e) {}
+  }
+
+  status.style.display = 'none';
+
+  if (allCards.length === 0) {
+    status.textContent = '⚠ Could not load feeds. Try again in a moment.';
+    status.style.color = '#f87171';
+    status.style.display = 'block';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.innerHTML = '✦ Fetch Live AI News';
+    return;
+  }
+
+  const breaking = allCards.find(function(c) { return c.impact === 'HIGH'; }) || allCards[0];
+  const ticker = document.getElementById('tsTicker');
+  const tickerText = document.getElementById('tsTickerText');
+  const tickerLink = document.getElementById('tsTickerLink');
+  if (breaking && ticker) {
+    tickerText.textContent = breaking.icon + ' ' + breaking.cat + ': ' + breaking.title;
+    tickerLink.href = breaking.link;
+    ticker.style.display = 'block';
+  }
+  const cats = document.getElementById('tsCats');
+  if (cats) cats.style.display = 'block';
+
+  renderCards();
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  btn.innerHTML = '↺ Refresh News';
+}
+
+function renderCards() {
+  const results = document.getElementById('tsResults');
+  const empty = document.getElementById('tsEmpty');
+  if (!results) return;
+  const order = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+  const filtered = activeFilter === 'all' ? allCards : allCards.filter(function(c) { return c.cat === activeFilter; });
+  filtered.sort(function(a, b) { return order[a.impact] - order[b.impact]; });
+  if (filtered.length === 0) {
+    results.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  results.innerHTML = filtered.map(function(n) {
+    return '<article onclick="window.open(\'' + n.link.replace(/'/g, "\\'") + '\',\'_blank\')" ' +
+    'style="background:#0d1b2e;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:22px;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;display:flex;flex-direction:column;gap:12px" ' +
+    'onmouseover="this.style.transform=\'translateY(-4px)\';this.style.borderColor=\'' + n.col + '50\';this.style.boxShadow=\'0 8px 32px ' + n.col + '18\'" ' +
+    'onmouseout="this.style.transform=\'\';this.style.borderColor=\'rgba(255,255,255,0.07)\';this.style.boxShadow=\'none\'">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between">' +
+    '<span style="font-size:10px;font-weight:800;letter-spacing:.08em;padding:3px 9px;border-radius:6px;color:' + n.col + ';background:' + n.col + '15;border:1px solid ' + n.col + '35">' + n.icon + ' ' + n.cat + '</span>' +
+    '<div style="display:flex;gap:8px">' +
+    '<span style="font-size:10px;font-weight:800;font-family:monospace;color:' + n.impCol + '">⚡ ' + n.impact + '</span>' +
+    '<span style="font-size:10px;color:#334155;font-family:monospace">' + n.freshness + '</span>' +
+    '</div></div>' +
+    '<h3 style="font-size:14px;font-weight:800;color:#f1f5f9;line-height:1.45;margin:0">' + n.title + '</h3>' +
+    '<p style="font-size:12px;color:#64748b;line-height:1.55;margin:0">' + n.summary + '</p>' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid #1e3a5f">' +
+    '<span style="font-size:11px;color:#334155">' + n.source + '</span>' +
+    '<span style="font-size:11px;color:#0a7c6e;font-weight:700">Read full story →</span>' +
+    '</div></article>';
+  }).join('');
+}
+
+function filterCat(cat) {
+  activeFilter = cat;
+  document.querySelectorAll('button[data-cat]').forEach(function(b) {
+    const isActive = b.getAttribute('data-cat') === cat;
+    b.style.background = isActive ? '#0a7c6e20' : 'transparent';
+    b.style.borderColor = isActive ? '#0a7c6e' : '#1e3a5f';
+    b.style.color = isActive ? '#34d399' : '#64748b';
+  });
+  renderCards();
+}
+</script>
+
+<style is:global>
+@keyframes tsspin { to { transform: rotate(360deg); } }
+@keyframes tspulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+</style>
+
 </Layout>

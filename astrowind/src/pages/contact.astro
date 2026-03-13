@@ -1,62 +1,80 @@
+export const prerender = true;
 ---
 import Layout from '~/layouts/PageLayout.astro';
-import HeroText from '~/components/widgets/HeroText.astro';
-import ContactUs from '~/components/widgets/Contact.astro';
-import Features2 from '~/components/widgets/Features2.astro';
-
-// Sherlock Logic: Branded itcloudx0 Calendar Link
-const BOOKING_URL = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ2SQsxPh728ktuzEnrQ1jy8bAXrrZNwprTNUMz2sxFxw-5rwZ4dj2ekqMt72U840Dvpx-a5r5Z1';
 
 const metadata = {
-  title: 'Contact | ITCloudX',
+  title: 'Contact TradeShield AI – Los Angeles Trade Compliance Startup',
+  description: 'Get in touch with our Los Angeles-based team building AI-powered trade compliance tools. Inquiries about HS code scanning, sanctions screening, tariff intelligence, or partnerships welcome.',
+  ignoreTitleTemplate: true,
 };
 ---
 
 <Layout metadata={metadata}>
-  <HeroText 
-    tag="Contact" 
-    title="Let's Connect" 
-    subtitle="Reach out to explore our AI development solutions. Have a great business concept? Let's partner to bring it to market."
-  />
+  <section class="py-16 md:py-24 bg-gradient-to-b from-white to-[#f7f5f0] dark:from-gray-950 dark:to-gray-900 transition-colors duration-300">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8">
+      <!-- Headline -->
+      <div class="text-center mb-12 md:mb-16">
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white leading-tight">
+          Let's Connect
+        </h1>
+        <p class="mt-4 md:mt-6 text-lg md:text-2xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">
+          Reach out to explore our AI-powered trade compliance solutions. Interested in HS code classification, sanctions screening, or partnerships? 
+          Let's talk.
+        </p>
+      </div>
 
-  <section class="max-w-3xl mx-auto px-4 sm:px-6 mb-12">
-    <div class="p-8 rounded-2xl border-4 border-purple-600 dark:border-purple-400 bg-slate-50 dark:bg-slate-800 text-center shadow-2xl">
-      <h2 class="text-3xl font-black uppercase mb-4 text-slate-900 dark:text-white">Ready to scale?</h2>
-      <p class="text-lg mb-8 text-muted dark:text-slate-300">
-        Skip the manual process. Schedule a direct <strong class="text-purple-600 dark:text-purple-400">AI Consultation</strong> with Yuriy to review your project.
-      </p>
-      
-      <a 
-        href={BOOKING_URL} 
-        target="_blank" 
-        rel="noopener noreferrer"
-        class="inline-flex items-center justify-center px-10 py-5 text-2xl font-black text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-all shadow-xl hover:scale-105 active:scale-95"
-      >
-        📅 BOOK A CALL
-      </a>
-      
-      <p class="text-sm mt-4 text-slate-500 italic">Opens in a new window</p>
+      <!-- Two-column layout -->
+      <div class="grid md:grid-cols-5 gap-10 lg:gap-16 items-start">
+        <!-- Left: Embedded Google Form -->
+        <div class="md:col-span-3 bg-white dark:bg-gray-950 rounded-3xl p-6 lg:p-8 shadow-xl transition-colors duration-300">
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-6 text-center md:text-left">
+            Send Your Message
+          </h2>
+          <p class="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed text-center md:text-left">
+            Tell us about your project, compliance needs, or partnership idea. As a small Los Angeles-based team, you'll get a direct response from the founder.
+          </p>
+
+          <!-- Form container – dark blue background in both modes -->
+          <div class="w-full h-[900px] md:h-[820px] lg:h-[860px] rounded-xl overflow-hidden bg-[#0b1e3d] shadow-inner">
+            <iframe 
+              src="https://docs.google.com/forms/d/e/1FAIpQLScTvuznEW7pZRTMH8km21aQ4JGOjSfTTPiZlqmtAgjX1i9L9w/viewform?embedded=true"
+              width="100%" 
+              height="100%" 
+              frameborder="0" 
+              marginheight="0" 
+              marginwidth="0"
+              scrolling="auto"
+              style="border: none;"
+              class="dark:invert dark:brightness-90 dark:contrast-125 dark:grayscale-0 transition-all duration-300"
+            >
+              Loading form…
+            </iframe>
+          </div>
+
+          <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
+            Form hosted securely by Google • Your data is protected
+          </p>
+        </div>
+
+        <!-- Right: Partnerships + location text -->
+        <div class="md:col-span-2 space-y-10 lg:space-y-12">
+          <div class="text-gray-700 dark:text-gray-300">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Partnerships</h3>
+            <p class="leading-relaxed">
+              Open for collaboration. We love working with founders, agencies, SaaS companies, 
+              and enterprises who want to bring powerful AI solutions to market. 
+              No gatekeepers — direct access to the team.
+            </p>
+            <p class="mt-4 text-sm italic">
+              Currently focused on AI-powered trade compliance, tariff intelligence, and sanctions screening tools.
+            </p>
+            <p class="mt-6 text-sm font-medium text-gray-900 dark:text-gray-100">
+              Based in Los Angeles, California<br />
+              A focused, agile team operating with a flat structure—ensuring direct founder involvement in every client relationship.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
-
-  <ContactUs
-    id="form"
-    title="General Inquiries"
-    subtitle="Prefer to start with a message? Tell us about your goals below."
-    inputs={[
-      { type: 'text', name: 'name', label: 'Full Name' },
-      { type: 'email', name: 'email', label: 'Business Email' },
-    ]}
-    textarea={{ label: 'Describe your concept or AI requirements' }}
-    button="Send Inquiry"
-  />
-
-  <Features2
-    title="Direct Communication"
-    items={[
-      { title: 'Email', description: 'itcloudx0@gmail.com', icon: 'tabler:mail' },
-      { title: 'Location', description: 'Los Angeles, CA', icon: 'tabler:map-pin' },
-      { title: 'Partnerships', description: 'Open for Collaboration', icon: 'tabler:bulb' },
-    ]}
-  />
 </Layout>

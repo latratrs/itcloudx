@@ -8,7 +8,6 @@ import sitemap from '@astrojs/sitemap';
 import icon from 'astro-icon';
 import compress from 'astro-compress';
 import partytown from '@astrojs/partytown';
-import node from '@astrojs/node';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -18,9 +17,11 @@ const vendorPath = pathToFileURL(path.resolve(__dirname, './vendor/integration/i
 const astrowind = (await import(/* @vite-ignore */ vendorPath)).default;
 
 export default defineConfig({
-  output: 'server',
+  output: 'static',
+  trailingSlash: 'never',   // matches Firebase hosting trailingSlash: false
+  build: { format: 'directory' },  // /blog/slug/index.html → served at /blog/slug by cleanUrls
+
   site: 'https://itcloudx.com',
-  adapter: node({ mode: 'standalone' }),
 
   server: {
     host: true,
@@ -56,4 +57,5 @@ export default defineConfig({
       },
     },
   },
+  image: { inferSize: true, domains: ["images.unsplash.com", "plus.unsplash.com", "images.pexels.com", "cdn.pixabay.com"] },
 });

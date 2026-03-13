@@ -1,31 +1,28 @@
 site:
-  name: ITCloudX
+  name: TradeShield AI
   site: 'https://itcloudx.com'
   base: '/'
   trailingSlash: false
-
-  # Note: Keep your verification ID if you use Google Search Console
   googleSiteVerificationId: orcPxI47GSa-cRvY11tUe6iGg2IO_RPvnA1q95iEM3M
 
-# Default SEO metadata for the ITCloudX Team
 metadata:
   title:
-    default: ITCloudX — AI Integration & IT Solutions
-    template: '%s — ITCloudX'
-  description: "Professional AI integration and IT audit services. Currently working on projects with Magic Castle."
+    default: TradeShield AI — Stop Fines Before They Start
+    template: '%s — TradeShield AI'
+  description: "AI-powered HS code classification and trade compliance. Prevent $1M+ customs fines with real-time OFAC sanctions screening and tariff intelligence. Free for 5 scans."
   robots:
     index: true
     follow: true
   openGraph:
-    site_name: ITCloudX
+    site_name: TradeShield AI
     images:
-      - url: '~/assets/images/default.png'
+      - url: '~/assets/images/default-2026.png'
         width: 1200
         height: 628
     type: website
   twitter:
-    handle: '@itcloudx'
-    site: '@itcloudx'
+    handle: '@tradeshieldai'
+    site: '@tradeshieldai'
     cardType: summary_large_image
 
 i18n:
@@ -36,38 +33,33 @@ apps:
   blog:
     isEnabled: true
     postsPerPage: 6
-
     post:
       isEnabled: true
       permalink: '/blog/%slug%'
       robots:
         index: true
-
     list:
       isEnabled: true
       pathname: 'blog'
       robots:
         index: true
-
     category:
       isEnabled: true
       pathname: 'category'
       robots:
         index: true
-
     tag:
       isEnabled: true
       pathname: 'tag'
       robots:
         index: false
-
     isRelatedPostsEnabled: true
     relatedPostsCount: 4
 
 analytics:
   vendors:
     googleAnalytics:
-      id: null # Add your G-ID here later for tracking
+      id: 'G-BSSE9LSJPM'
 
 ui:
   theme: 'system'
