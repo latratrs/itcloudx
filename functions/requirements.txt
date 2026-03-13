@@ -1,0 +1,9 @@
+# Google Cloud Functions framework
+functions-framework==3.*
+
+# Google Cloud Vision API client
+google-cloud-vision==3.*
+
+# PyMuPDF — converts PDF pages to images for Vision API analysis.
+# Optional but strongly recommended for multi-page PDF support.
+PyMuPDF==1.24.*

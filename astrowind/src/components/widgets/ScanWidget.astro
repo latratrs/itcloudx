@@ -1,0 +1,653 @@
+---
+/**
+ * ScanWidget.astro — Reusable Google Cloud Vision API scan widget.
+ *
+ * Integrates with the TradeShield AI Vision scan backend (functions/scan_handler.py).
+ * Displays four result tabs: OCR Text, Labels, Detected Objects, and Barcodes.
+ *
+ * Usage:
+ *   import ScanWidget from '~/components/widgets/ScanWidget.astro';
+ *   <ScanWidget endpoint="https://your-function-url" heading="Scan Your Document" />
+ *
+ * Props:
+ *   endpoint  — Full URL (or relative path) of the Vision scan function.
+ *               Falls back to the VISION_FUNCTION_URL build-time env var,
+ *               then to demo mode with sample Vision API data.
+ *   heading   — Heading displayed above the upload zone (default: "Vision Document Scan").
+ */
+
+interface Props {
+  /** Cloud Function URL or relative API path. */
+  endpoint?: string;
+  /** Heading above the upload zone. */
+  heading?: string;
+}
+
+const {
+  endpoint = import.meta.env.VISION_FUNCTION_URL || '',
+  heading = 'Vision Document Scan',
+} = Astro.props;
+---
+
+<div
+  class="scan-widget"
+  data-endpoint={endpoint}
+  data-heading={heading}
+>
+
+  <!-- ── SCREEN 1: Upload ───────────────────────────────────────────── -->
+  <div id="sw-upload" class="space-y-6">
+
+    <!-- Drop zone -->
+    <div
+      id="sw-drop-zone"
+      class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl p-10 text-center cursor-pointer hover:border-teal-500 hover:bg-teal-50/50 dark:hover:bg-teal-950/20 transition-all"
+      role="button"
+      aria-label="Upload file for Vision scan"
+      tabindex="0"
+    >
+      <input
+        type="file"
+        id="sw-file-input"
+        accept=".pdf,.jpg,.jpeg,.png,.tiff,.tif,.webp,.bmp,.gif"
+        class="hidden"
+        aria-label="Choose file for Vision scan"
+      />
+
+      <!-- Idle state -->
+      <div id="sw-drop-idle">
+        <div class="text-5xl mb-4">🔍</div>
+        <div class="text-xl font-bold text-gray-800 dark:text-white mb-2">Drop your document or image here</div>
+        <div class="text-gray-500 dark:text-gray-400 text-sm mb-4">PDF · JPG · PNG · TIFF · WebP (max 25 MB)</div>
+        <button
+          type="button"
+          class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-6 py-2.5 rounded-xl transition"
+        >
+          Choose File
+        </button>
+      </div>
+
+      <!-- File ready state -->
+      <div id="sw-drop-ready" class="hidden">
+        <div class="text-5xl mb-3">📎</div>
+        <div id="sw-filename" class="text-lg font-bold text-gray-800 dark:text-white mb-1"></div>
+        <div id="sw-filesize" class="text-gray-500 dark:text-gray-400 text-sm mb-3"></div>
+        <!-- Image preview -->
+        <div id="sw-img-preview" class="mb-4 hidden">
+          <img
+            id="sw-preview-img"
+            src=""
+            alt="Upload preview"
+            class="max-h-48 rounded-xl border mx-auto object-contain"
+          />
+        </div>
+        <button
+          type="button"
+          id="sw-clear-btn"
+          class="text-red-500 hover:text-red-700 dark:text-red-400 text-sm font-medium"
+        >
+          ✕ Remove file
+        </button>
+      </div>
+    </div>
+
+    <!-- Email + Company inputs -->
+    <div class="grid md:grid-cols-2 gap-4">
+      <div>
+        <label for="sw-email" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+          Email <span class="text-red-500" aria-hidden="true">*</span>
+        </label>
+        <input
+          type="email"
+          id="sw-email"
+          placeholder="you@company.com"
+          required
+          class="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none transition"
+        />
+      </div>
+      <div>
+        <label for="sw-company" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+          Company <span class="text-gray-400 font-normal">(optional)</span>
+        </label>
+        <input
+          type="text"
+          id="sw-company"
+          placeholder="Acme Imports LLC"
+          class="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none transition"
+        />
+      </div>
+    </div>
+
+    <!-- Scan button -->
+    <button
+      id="sw-scan-btn"
+      type="button"
+      disabled
+      aria-disabled="true"
+      class="w-full py-4 text-lg font-black rounded-xl bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white shadow-lg transition disabled:opacity-40 disabled:cursor-not-allowed"
+    >
+      🔍 Run Vision Scan
+    </button>
+
+    <p class="text-center text-xs text-gray-400 leading-relaxed">
+      Files are processed in memory and not stored.
+      By scanning you agree to our
+      <a href="/privacy" class="text-teal-600 dark:text-teal-400 hover:underline">Privacy Policy</a>
+      &amp;
+      <a href="/terms" class="text-teal-600 dark:text-teal-400 hover:underline">Terms</a>.
+    </p>
+  </div><!-- /sw-upload -->
+
+
+  <!-- ── SCREEN 2: Scanning progress ────────────────────────────────── -->
+  <div id="sw-scanning" class="hidden flex flex-col items-center justify-center min-h-[40vh] space-y-8 py-16">
+    <div class="relative w-28 h-28">
+      <div class="absolute inset-0 rounded-full bg-teal-400/20 animate-ping"></div>
+      <div class="absolute inset-3 rounded-full bg-teal-500/30 animate-pulse"></div>
+      <div class="absolute inset-0 flex items-center justify-center text-5xl sw-spin">🔍</div>
+    </div>
+    <h2 class="text-3xl font-black text-gray-900 dark:text-white">Analyzing with Google Vision…</h2>
+    <div class="w-80 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div id="sw-progress-bar" class="bg-teal-500 h-2 rounded-full transition-all duration-500" style="width:5%"></div>
+    </div>
+    <div class="space-y-2 text-sm text-gray-500 dark:text-gray-400 text-center" aria-live="polite">
+      <div id="sw-step-1" class="sw-step">📄 Uploading document…</div>
+      <div id="sw-step-2" class="sw-step opacity-40">🔤 Running OCR…</div>
+      <div id="sw-step-3" class="sw-step opacity-40">🏷️ Detecting labels…</div>
+      <div id="sw-step-4" class="sw-step opacity-40">📦 Localizing objects…</div>
+      <div id="sw-step-5" class="sw-step opacity-40">🔲 Extracting barcodes…</div>
+    </div>
+  </div><!-- /sw-scanning -->
+
+
+  <!-- ── SCREEN 3: Results ──────────────────────────────────────────── -->
+  <div id="sw-results" class="hidden space-y-6">
+
+    <!-- Result header -->
+    <div class="bg-[#0b1e3d] text-white rounded-2xl p-6">
+      <div class="flex flex-col md:flex-row gap-4 items-start justify-between">
+        <div>
+          <span class="inline-block bg-teal-500/20 text-teal-300 border border-teal-500/30 text-xs font-bold tracking-widest px-4 py-1 rounded-full mb-3">
+            VISION SCAN COMPLETE
+          </span>
+          <h2 class="text-2xl font-black leading-tight">
+            ✅ Document Analyzed
+          </h2>
+          <p id="sw-res-meta" class="text-white/40 font-mono text-xs mt-2"></p>
+        </div>
+        <div class="flex gap-3 flex-wrap">
+          <div class="bg-white/10 border border-white/20 rounded-xl p-4 text-center min-w-[100px]">
+            <div id="sw-stat-labels" class="text-3xl font-black text-teal-400">0</div>
+            <div class="text-xs text-white/50 mt-1">Labels</div>
+          </div>
+          <div class="bg-white/10 border border-white/20 rounded-xl p-4 text-center min-w-[100px]">
+            <div id="sw-stat-objects" class="text-3xl font-black text-blue-400">0</div>
+            <div class="text-xs text-white/50 mt-1">Objects</div>
+          </div>
+          <div class="bg-white/10 border border-white/20 rounded-xl p-4 text-center min-w-[100px]">
+            <div id="sw-stat-barcodes" class="text-3xl font-black text-yellow-400">0</div>
+            <div class="text-xs text-white/50 mt-1">Barcodes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab bar -->
+    <div class="flex flex-wrap gap-2" role="tablist">
+      <button
+        role="tab"
+        aria-selected="true"
+        aria-controls="sw-tab-ocr"
+        id="sw-tab-btn-ocr"
+        class="sw-tab-btn sw-tab-active px-5 py-2.5 rounded-xl text-sm font-semibold transition"
+        onclick="swSwitchTab('ocr')"
+      >
+        🔤 OCR Text
+      </button>
+      <button
+        role="tab"
+        aria-selected="false"
+        aria-controls="sw-tab-labels"
+        id="sw-tab-btn-labels"
+        class="sw-tab-btn px-5 py-2.5 rounded-xl text-sm font-semibold transition bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+        onclick="swSwitchTab('labels')"
+      >
+        🏷️ Labels
+      </button>
+      <button
+        role="tab"
+        aria-selected="false"
+        aria-controls="sw-tab-objects"
+        id="sw-tab-btn-objects"
+        class="sw-tab-btn px-5 py-2.5 rounded-xl text-sm font-semibold transition bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+        onclick="swSwitchTab('objects')"
+      >
+        📦 Objects
+      </button>
+      <button
+        role="tab"
+        aria-selected="false"
+        aria-controls="sw-tab-barcodes"
+        id="sw-tab-btn-barcodes"
+        class="sw-tab-btn px-5 py-2.5 rounded-xl text-sm font-semibold transition bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+        onclick="swSwitchTab('barcodes')"
+      >
+        🔲 Barcodes
+      </button>
+    </div>
+
+    <!-- Tab panels -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6">
+
+      <!-- OCR Text tab -->
+      <div id="sw-tab-ocr" role="tabpanel" aria-labelledby="sw-tab-btn-ocr">
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3">Extracted Text (OCR)</h3>
+        <div
+          id="sw-ocr-content"
+          class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 text-sm text-gray-700 dark:text-gray-300 font-mono whitespace-pre-wrap max-h-96 overflow-y-auto leading-relaxed"
+          aria-label="Extracted OCR text"
+        ></div>
+      </div>
+
+      <!-- Labels tab -->
+      <div id="sw-tab-labels" role="tabpanel" aria-labelledby="sw-tab-btn-labels" class="hidden">
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3">Detected Labels</h3>
+        <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">
+          Content labels identified by the Vision API with confidence scores.
+        </p>
+        <div id="sw-labels-content" class="space-y-2"></div>
+      </div>
+
+      <!-- Objects tab -->
+      <div id="sw-tab-objects" role="tabpanel" aria-labelledby="sw-tab-btn-objects" class="hidden">
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3">Detected Objects</h3>
+        <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">
+          Physical objects localized by Vision API object detection.
+        </p>
+        <div id="sw-objects-content" class="space-y-2"></div>
+      </div>
+
+      <!-- Barcodes tab -->
+      <div id="sw-tab-barcodes" role="tabpanel" aria-labelledby="sw-tab-btn-barcodes" class="hidden">
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3">Extracted Barcodes &amp; QR Codes</h3>
+        <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">
+          Barcode values (UPC/EAN) and QR-code URLs found in the scanned text.
+        </p>
+        <div id="sw-barcodes-content" class="space-y-2"></div>
+      </div>
+
+    </div><!-- /tab panels -->
+
+    <!-- Actions row -->
+    <div class="flex flex-col sm:flex-row gap-3">
+      <a
+        href="/contact"
+        class="inline-flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-bold px-8 py-3 rounded-xl shadow transition"
+      >
+        📞 Talk to a Compliance Expert
+      </a>
+      <button
+        type="button"
+        id="sw-rescan-btn"
+        class="inline-flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-bold px-8 py-3 rounded-xl transition"
+      >
+        🔄 Scan Another Document
+      </button>
+    </div>
+
+  </div><!-- /sw-results -->
+
+
+  <!-- ── SCREEN 4: Error ────────────────────────────────────────────── -->
+  <div id="sw-error" class="hidden text-center py-16 space-y-6">
+    <div class="text-6xl">⚠️</div>
+    <h2 class="text-3xl font-black text-gray-900 dark:text-white">Scan Failed</h2>
+    <p id="sw-error-msg" class="text-gray-500 dark:text-gray-400 text-lg max-w-lg mx-auto"></p>
+    <button
+      type="button"
+      id="sw-retry-btn"
+      class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-8 py-3 rounded-xl transition"
+    >
+      Try Again
+    </button>
+  </div><!-- /sw-error -->
+
+</div><!-- /scan-widget -->
+
+<style>
+  .sw-spin { animation: swSpinAnim 8s linear infinite; }
+  @keyframes swSpinAnim { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .sw-tab-active {
+    background-color: #0fb39d !important;
+    color: white !important;
+  }
+  .sw-step { transition: opacity 0.3s ease; }
+</style>
+
+<script is:inline>
+(function () {
+  // ── DOM refs ─────────────────────────────────────────────────────────
+  var root       = document.querySelector('.scan-widget');
+  var ENDPOINT   = root ? root.dataset.endpoint : '';
+
+  // Screens
+  var scrUpload   = document.getElementById('sw-upload');
+  var scrScanning = document.getElementById('sw-scanning');
+  var scrResults  = document.getElementById('sw-results');
+  var scrError    = document.getElementById('sw-error');
+
+  // Upload elements
+  var dropZone    = document.getElementById('sw-drop-zone');
+  var fileInput   = document.getElementById('sw-file-input');
+  var dropIdle    = document.getElementById('sw-drop-idle');
+  var dropReady   = document.getElementById('sw-drop-ready');
+  var filenameEl  = document.getElementById('sw-filename');
+  var filesizeEl  = document.getElementById('sw-filesize');
+  var imgPreview  = document.getElementById('sw-img-preview');
+  var previewImg  = document.getElementById('sw-preview-img');
+  var clearBtn    = document.getElementById('sw-clear-btn');
+  var emailInput  = document.getElementById('sw-email');
+  var companyInput= document.getElementById('sw-company');
+  var scanBtn     = document.getElementById('sw-scan-btn');
+
+  // Results
+  var rescanBtn   = document.getElementById('sw-rescan-btn');
+  var retryBtn    = document.getElementById('sw-retry-btn');
+  var progressBar = document.getElementById('sw-progress-bar');
+  var errorMsg    = document.getElementById('sw-error-msg');
+
+  var selectedFile = null;
+
+  // ── Screen helpers ───────────────────────────────────────────────────
+  function swShow(el)  { el && el.classList.remove('hidden'); }
+  function swHide(el)  { el && el.classList.add('hidden'); }
+  function swOnly(el)  { [scrUpload, scrScanning, scrResults, scrError].forEach(swHide); swShow(el); }
+
+  // ── File handling ────────────────────────────────────────────────────
+  function swSetFile(file) {
+    selectedFile = file;
+    swHide(dropIdle);
+    swShow(dropReady);
+    filenameEl.textContent = file.name;
+    filesizeEl.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+    scanBtn.disabled = false;
+    scanBtn.setAttribute('aria-disabled', 'false');
+
+    // Show image preview for image types
+    if (file.type.startsWith('image/')) {
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        previewImg.src = e.target.result;
+        swShow(imgPreview);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      swHide(imgPreview);
+    }
+  }
+
+  function swClearFile() {
+    selectedFile = null;
+    fileInput.value = '';
+    swShow(dropIdle);
+    swHide(dropReady);
+    swHide(imgPreview);
+    scanBtn.disabled = true;
+    scanBtn.setAttribute('aria-disabled', 'true');
+  }
+
+  // ── Drop-zone events ─────────────────────────────────────────────────
+  dropZone.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    dropZone.classList.add('border-teal-500', 'bg-teal-50/50');
+  });
+  dropZone.addEventListener('dragleave', function () {
+    dropZone.classList.remove('border-teal-500', 'bg-teal-50/50');
+  });
+  dropZone.addEventListener('drop', function (e) {
+    e.preventDefault();
+    dropZone.classList.remove('border-teal-500', 'bg-teal-50/50');
+    var file = e.dataTransfer.files[0];
+    if (file) swSetFile(file);
+  });
+  dropZone.addEventListener('click', function () { fileInput.click(); });
+  dropZone.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+  fileInput.addEventListener('change', function (e) { if (e.target.files[0]) swSetFile(e.target.files[0]); });
+  if (clearBtn) clearBtn.addEventListener('click', function (e) { e.stopPropagation(); swClearFile(); });
+
+  // ── Scan ─────────────────────────────────────────────────────────────
+  if (scanBtn) scanBtn.addEventListener('click', swStartScan);
+
+  function swStartScan() {
+    var email = emailInput ? emailInput.value.trim() : '';
+    if (!email) { alert('Please enter your email address.'); return; }
+    if (!selectedFile) { alert('Please select a file first.'); return; }
+
+    swOnly(scrScanning);
+    progressBar.style.width = '5%';
+
+    // Animate progress steps
+    var steps = ['sw-step-1','sw-step-2','sw-step-3','sw-step-4','sw-step-5'];
+    steps.forEach(function (id, i) {
+      setTimeout(function () {
+        var el = document.getElementById(id);
+        if (el) { el.classList.remove('opacity-40'); }
+        progressBar.style.width = ((i + 1) / steps.length * 80) + '%';
+        progressBar.parentElement.setAttribute('aria-valuenow', Math.round((i + 1) / steps.length * 80));
+      }, i * 2000);
+    });
+
+    var fd = new FormData();
+    fd.append('file', selectedFile);
+    fd.append('email', email);
+    var company = companyInput ? companyInput.value.trim() : '';
+    if (company) fd.append('company', company);
+
+    // If no endpoint configured, use built-in demo data
+    var scanPromise = ENDPOINT
+      ? fetch(ENDPOINT, { method: 'POST', body: fd }).then(function (r) { return r.json(); })
+      : Promise.resolve(swDemoData(selectedFile.name));
+
+    scanPromise
+      .then(function (data) {
+        progressBar.style.width = '100%';
+        progressBar.parentElement.setAttribute('aria-valuenow', 100);
+        setTimeout(function () { swRenderResults(data); }, 500);
+      })
+      .catch(function (err) {
+        errorMsg.textContent = err.message || 'Network error. Please try again.';
+        swOnly(scrError);
+      });
+  }
+
+  // ── Render results ───────────────────────────────────────────────────
+  function swRenderResults(data) {
+    if (data.status === 'error' || data.error) {
+      errorMsg.textContent = data.error || 'Vision API returned an error.';
+      swOnly(scrError);
+      return;
+    }
+
+    // Stats
+    document.getElementById('sw-stat-labels').textContent   = (data.labels   || []).length;
+    document.getElementById('sw-stat-objects').textContent  = (data.objects  || []).length;
+    document.getElementById('sw-stat-barcodes').textContent = (data.barcodes || []).length;
+
+    // Meta line
+    var meta = [];
+    if (data.job_id)    meta.push('JOB: ' + data.job_id);
+    if (data.filename)  meta.push('FILE: ' + data.filename);
+    if (data.page_count) meta.push('PAGES: ' + data.page_count);
+    if (data.email)     meta.push('EMAIL: ' + data.email);
+    var metaEl = document.getElementById('sw-res-meta');
+    if (metaEl) metaEl.textContent = meta.join('  ·  ');
+
+    // OCR text
+    var ocrEl = document.getElementById('sw-ocr-content');
+    if (ocrEl) {
+      ocrEl.textContent = data.ocr_text
+        ? data.ocr_text
+        : '(No text detected in this file.)';
+    }
+
+    // Labels
+    swRenderScoreList('sw-labels-content', data.labels || [], 'description', 'teal',
+      '(No content labels detected.)');
+
+    // Objects
+    swRenderScoreList('sw-objects-content', data.objects || [], 'name', 'blue',
+      '(No objects detected — try an image with visible products or packaging.)');
+
+    // Barcodes
+    var barcodeEl = document.getElementById('sw-barcodes-content');
+    if (barcodeEl) {
+      var barcodes = data.barcodes || [];
+      if (!barcodes.length) {
+        barcodeEl.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">(No barcodes or QR codes detected.)</p>';
+      } else {
+        barcodeEl.innerHTML = barcodes.map(function (b) {
+          return '<div class="flex items-center gap-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl px-4 py-3">' +
+            '<span class="text-2xl">🔲</span>' +
+            '<div>' +
+              '<div class="text-xs font-bold text-yellow-700 dark:text-yellow-400 uppercase tracking-wider">' + swEsc(b.type) + '</div>' +
+              '<div class="font-mono text-base text-gray-900 dark:text-white break-all">' + swEsc(b.value) + '</div>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      }
+    }
+
+    // Note (e.g. multi-page PDF warning)
+    if (data.note) {
+      var noteHtml = '<div class="text-xs text-gray-400 italic mt-2">' + swEsc(data.note) + '</div>';
+      var ocrContainer = document.getElementById('sw-tab-ocr');
+      if (ocrContainer) ocrContainer.insertAdjacentHTML('beforeend', noteHtml);
+    }
+
+    swSwitchTab('ocr');
+    swOnly(scrResults);
+  }
+
+  /** Render a list of {description/name, score} items as a labelled bar list. */
+  function swRenderScoreList(containerId, items, labelKey, color, emptyMsg) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    if (!items.length) {
+      el.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">' + emptyMsg + '</p>';
+      return;
+    }
+    var colorMap = {
+      teal: { bar: 'bg-teal-500',  text: 'text-teal-700 dark:text-teal-400' },
+      blue: { bar: 'bg-blue-500',  text: 'text-blue-700 dark:text-blue-400'  },
+    };
+    var c = colorMap[color] || colorMap.teal;
+    el.innerHTML = items.map(function (item) {
+      var pct = Math.round((item.score || 0) * 100);
+      return '<div class="flex items-center gap-3 py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">' +
+        '<div class="flex-1 font-medium text-gray-900 dark:text-white text-sm">' + swEsc(item[labelKey] || '—') + '</div>' +
+        '<div class="w-32">' +
+          '<div class="bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">' +
+            '<div class="' + c.bar + ' h-2 rounded-full" style="width:' + pct + '%"></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="text-xs font-bold ' + c.text + ' w-10 text-right">' + pct + '%</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ── Tab switching ────────────────────────────────────────────────────
+  window.swSwitchTab = function (tab) {
+    var panels = ['ocr', 'labels', 'objects', 'barcodes'];
+    panels.forEach(function (p) {
+      var panel = document.getElementById('sw-tab-' + p);
+      var btn   = document.getElementById('sw-tab-btn-' + p);
+      var isActive = (p === tab);
+      if (panel) { panel.classList.toggle('hidden', !isActive); }
+      if (btn) {
+        btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        if (isActive) {
+          btn.classList.add('sw-tab-active');
+          btn.classList.remove('bg-gray-100', 'dark:bg-gray-800', 'text-gray-700', 'dark:text-gray-300');
+        } else {
+          btn.classList.remove('sw-tab-active');
+          btn.classList.add('bg-gray-100', 'dark:bg-gray-800', 'text-gray-700', 'dark:text-gray-300');
+        }
+      }
+    });
+  };
+
+  // ── Rescan / Retry ───────────────────────────────────────────────────
+  function swRescan() {
+    swClearFile();
+    // Reset steps
+    ['sw-step-1','sw-step-2','sw-step-3','sw-step-4','sw-step-5'].forEach(function (id, i) {
+      var el = document.getElementById(id);
+      if (el) el.classList.toggle('opacity-40', i !== 0);
+    });
+    progressBar.style.width = '5%';
+    // Clear tab note additions
+    var noteDivs = document.querySelectorAll('#sw-tab-ocr .text-xs.italic');
+    noteDivs.forEach(function (n) { n.remove(); });
+    swOnly(scrUpload);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  if (rescanBtn) rescanBtn.addEventListener('click', swRescan);
+  if (retryBtn)  retryBtn.addEventListener('click',  swRescan);
+
+  // ── XSS-safe HTML escaping ───────────────────────────────────────────
+  function swEsc(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ── Demo data (returned when no endpoint is configured) ──────────────
+  function swDemoData(filename) {
+    return {
+      status:     'success',
+      job_id:     'VISION-DEMO-' + Date.now(),
+      filename:   filename || 'sample-invoice.pdf',
+      email:      '',
+      company:    '',
+      page_count: 1,
+      ocr_text:   [
+        'COMMERCIAL INVOICE',
+        'Shipper: Acme Electronics Ltd.  Shanghai, China',
+        'Consignee: Global Imports LLC  Los Angeles, CA 90001',
+        '',
+        'Item 1: Laptop Computer (15")   Qty: 50   Unit: $800   Total: $40,000',
+        '        HS Code: 8471.30        Country of Origin: CN',
+        'Item 2: USB-C Charging Cable    Qty: 500  Unit: $4     Total: $2,000',
+        '        HS Code: 8544.42        Country of Origin: VN',
+        'Item 3: Wireless Mouse          Qty: 200  Unit: $12    Total: $2,400',
+        '        HS Code: 8471.60        Country of Origin: CN',
+        '',
+        'Barcode: 012345678901',
+        'Invoice No: INV-2026-0042',
+        'Date: 2026-03-10',
+        'Total: $44,400 USD',
+      ].join('\n'),
+      labels: [
+        { description: 'Document',     score: 0.99 },
+        { description: 'Text',         score: 0.98 },
+        { description: 'Invoice',      score: 0.95 },
+        { description: 'Electronics',  score: 0.87 },
+        { description: 'Shipping',     score: 0.81 },
+      ],
+      objects: [
+        { name: 'Document',  score: 0.97 },
+        { name: 'Paper',     score: 0.88 },
+        { name: 'Text',      score: 0.85 },
+      ],
+      barcodes: [
+        { type: 'UPC/EAN', value: '012345678901' },
+      ],
+      note: 'Demo mode — connect VISION_FUNCTION_URL to see live Vision API results.',
+    };
+  }
+
+})();
+</script>

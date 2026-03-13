@@ -1,184 +1,99 @@
 ---
 import Layout from '~/layouts/PageLayout.astro';
+import ScanWidget from '~/components/widgets/ScanWidget.astro';
+
+export const prerender = true;
+
 const metadata = {
-  title: 'Free Compliance Audit – TradeShield AI',
-  description: 'Upload shipping documents for instant AI-powered HS code classification, sanctions screening, and customs compliance analysis.',
+  title: 'Free Vision Audit – TradeShield AI',
+  description:
+    'Upload shipping documents or product images for instant Google Cloud Vision analysis: OCR, object detection, label detection, and barcode extraction.',
   robots: 'noindex',
 };
 ---
+
 <Layout metadata={metadata}>
   <section class="min-h-screen bg-gradient-to-b from-white to-[#f7f5f0] dark:from-gray-950 dark:to-gray-900 transition-colors duration-300">
-    <div class="max-w-5xl mx-auto px-6 py-16 md:py-24">
-      <div id="upload-screen" class="space-y-12">
-        <div class="text-center">
-          <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white leading-tight">
-            Free Compliance Audit
-          </h1>
-          <p class="mt-6 text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            Upload any shipping document (PDF, CSV, Excel, image). Get instant AI analysis: HS codes, duty rates, sanctions flags, and a clear action plan.
-          </p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-8 md:p-12">
-          <div id="drop-zone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl p-12 text-center cursor-pointer hover:border-teal-500 dark:hover:border-teal-400 transition-colors" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" onclick="document.getElementById('file-input').click()">
-            <input type="file" id="file-input" accept=".pdf,.csv,.xlsx,.xls,.jpg,.jpeg,.png,.tiff,.tif" class="hidden" onchange="handleFileSelect(event)">
-            <div id="upload-idle">
-              <div class="text-6xl mb-6">📄</div>
-              <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Drop your document here</h3>
-              <p class="text-gray-500 dark:text-gray-400">PDF · CSV · Excel · JPG · PNG · TIFF (max 25MB)</p>
-              <button class="mt-6 px-8 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl transition">Choose File</button>
-            </div>
-            <div id="upload-ready" class="hidden">
-              <div class="text-6xl mb-6">📎</div>
-              <h3 id="file-name" class="text-xl font-bold text-gray-900 dark:text-white mb-2"></h3>
-              <p id="file-size" class="text-gray-500 dark:text-gray-400"></p>
-              <button onclick="clearFile()" class="mt-6 text-red-600 dark:text-red-400 hover:text-red-700 font-medium">Remove file</button>
-            </div>
+    <div class="max-w-4xl mx-auto px-6 py-16 md:py-24 space-y-12">
+
+      <!-- Page heading -->
+      <div class="text-center">
+        <span class="inline-block bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
+          Powered by Google Cloud Vision API
+        </span>
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white leading-tight">
+          Free Vision Audit
+        </h1>
+        <p class="mt-6 text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+          Upload any shipping document, invoice, or product image. Get instant AI analysis powered by
+          <strong>Google Cloud Vision</strong>: OCR, object detection, label detection, and barcode extraction.
+        </p>
+      </div>
+
+      <!-- Capability chips -->
+      <div class="flex flex-wrap justify-center gap-3">
+        <span class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold px-4 py-2 rounded-full shadow-sm">
+          🔤 Full-document OCR
+        </span>
+        <span class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold px-4 py-2 rounded-full shadow-sm">
+          🏷️ Label detection
+        </span>
+        <span class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold px-4 py-2 rounded-full shadow-sm">
+          📦 Object localization
+        </span>
+        <span class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold px-4 py-2 rounded-full shadow-sm">
+          🔲 Barcode &amp; QR extraction
+        </span>
+        <span class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold px-4 py-2 rounded-full shadow-sm">
+          📄 PDF support
+        </span>
+      </div>
+
+      <!-- Scan widget -->
+      <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 md:p-10">
+        <ScanWidget heading="Vision Audit Tool" />
+      </div>
+
+      <!-- How it works -->
+      <div class="bg-white dark:bg-gray-800 rounded-3xl shadow border border-gray-200 dark:border-gray-700 p-8">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">How It Works</h2>
+        <div class="grid md:grid-cols-4 gap-6">
+          <div class="text-center">
+            <div class="text-4xl mb-3">📤</div>
+            <div class="font-bold text-gray-900 dark:text-white mb-1">1. Upload</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">Drop an image (JPG, PNG, TIFF) or PDF</div>
           </div>
-          <div class="mt-8 grid md:grid-cols-2 gap-6">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email (for report delivery)</label>
-              <input type="email" id="email" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none" placeholder="you@company.com" required>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Company / Consignee Name</label>
-              <input type="text" id="company" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none" placeholder="Acme Imports LLC">
-            </div>
+          <div class="text-center">
+            <div class="text-4xl mb-3">☁️</div>
+            <div class="font-bold text-gray-900 dark:text-white mb-1">2. Vision API</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">Google Cloud Vision analyzes the file</div>
           </div>
-          <button id="scan-btn" onclick="startScan()" class="mt-8 w-full py-4 px-8 bg-teal-600 hover:bg-teal-700 text-white font-bold text-lg rounded-xl shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-            Run Free Compliance Scan
-          </button>
-          <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-            By scanning, you agree to our <a href="/terms" class="text-teal-600 dark:text-teal-400 hover:underline">Terms</a> and <a href="/privacy" class="text-teal-600 dark:text-teal-400 hover:underline">Privacy Policy</a>. This is not legal advice — verify with a licensed customs broker.
-          </p>
-        </div>
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-200 dark:border-gray-700 text-center">
-            <div class="text-5xl mb-4">🏷️</div>
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">HS Code Classification</h3>
-            <p class="text-gray-600 dark:text-gray-400">6-digit + 10-digit codes with confidence score</p>
+          <div class="text-center">
+            <div class="text-4xl mb-3">🔍</div>
+            <div class="font-bold text-gray-900 dark:text-white mb-1">3. Extract</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">OCR, labels, objects, and barcodes returned</div>
           </div>
-          <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-200 dark:border-gray-700 text-center">
-            <div class="text-5xl mb-4">💰</div>
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Duty Rate Breakdown</h3>
-            <p class="text-gray-600 dark:text-gray-400">Base + Section 301/232 stacked tariffs</p>
-          </div>
-          <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-200 dark:border-gray-700 text-center">
-            <div class="text-5xl mb-4">��️</div>
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Sanctions Screening</h3>
-            <p class="text-gray-600 dark:text-gray-400">Real-time OFAC, EU, UN list checks</p>
-          </div>
-          <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-200 dark:border-gray-700 text-center">
-            <div class="text-5xl mb-4">📋</div>
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Action Plan</h3>
-            <p class="text-gray-600 dark:text-gray-400">Plain-English steps: fix, file, hold</p>
+          <div class="text-center">
+            <div class="text-4xl mb-3">✅</div>
+            <div class="font-bold text-gray-900 dark:text-white mb-1">4. Review</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">Tabbed results — copy, use, or export</div>
           </div>
         </div>
       </div>
-      <div id="scanning-screen" class="hidden flex flex-col items-center justify-center min-h-[60vh] space-y-8">
-        <div class="relative w-32 h-32">
-          <div class="absolute inset-0 rounded-full bg-teal-500/20 animate-ping"></div>
-          <div class="absolute inset-4 rounded-full bg-teal-600/30 animate-pulse"></div>
-          <div class="absolute inset-0 flex items-center justify-center text-6xl animate-spin-slow">🔍</div>
-        </div>
-        <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Analyzing your document…</h2>
-        <div class="w-96 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-          <div id="scan-progress" class="bg-teal-600 h-2 rounded-full w-0 transition-all duration-300"></div>
-        </div>
-        <p class="text-gray-600 dark:text-gray-400">Usually completes in 10–20 seconds</p>
+
+      <!-- CTA -->
+      <div class="text-center">
+        <p class="text-gray-500 dark:text-gray-400 mb-4">
+          Want the full compliance analysis — HS codes, sanctions, tariff rates?
+        </p>
+        <a
+          href="/pricing"
+          class="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-bold px-8 py-3 rounded-xl shadow transition"
+        >
+          Upgrade to Pro → $299/mo
+        </a>
       </div>
-      <div id="results-screen" class="hidden space-y-12">
-        <div class="text-center">
-          <div class="inline-block px-8 py-4 rounded-full text-3xl font-black mb-4 bg-red-600 text-white animate-pulse" id="risk-badge">Risk Score: 75/100</div>
-          <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-4">Shipment Hold Recommended</h2>
-          <p class="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">1 product flagged as HIGH risk. Review details below before proceeding.</p>
-        </div>
-        <div class="flex flex-wrap gap-4 justify-center border-b border-gray-200 dark:border-gray-700 pb-4">
-          <button onclick="showTab('products')" class="tab-btn px-6 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 font-medium transition">Products</button>
-          <button onclick="showTab('problems')" class="tab-btn px-6 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 font-medium transition">Problems Found</button>
-          <button onclick="showTab('sanctions')" class="tab-btn px-6 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 font-medium transition">Sanctions</button>
-          <button onclick="showTab('tariffs')" class="tab-btn px-6 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 font-medium transition">Tariffs</button>
-          <button onclick="showTab('fix')" class="tab-btn px-6 py-3 rounded-xl bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-800 font-medium transition border border-red-500">Fix It</button>
-        </div>
-        <div id="tab-content" class="space-y-8">
-          <div id="tab-fix" class="tab-panel">
-            <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
-              <h3 class="text-2xl md:text-3xl font-bold text-red-600 dark:text-red-400 mb-6">Your Step-by-Step Fix Plan</h3>
-              <div class="bg-red-50 dark:bg-red-950/30 border-l-4 border-red-500 p-6 rounded-xl">
-                <p class="font-medium text-lg mb-4">REVIEW — Diagnostic Specimens: tissue or bodily fluid, possibly infected with Bartonella spp bacteria</p>
-                <p class="text-gray-700 dark:text-gray-300">Import of biological specimens requires specific permits (e.g., CDC import permit for etiologic agents) and strict adherence to IATA/DOT dangerous goods regulations. The commercial invoice does not indicate these critical permits.</p>
-              </div>
-              <div class="mt-8 flex flex-col sm:flex-row gap-6 justify-center">
-                <a href="/contact" class="inline-flex items-center gap-3 bg-red-600 hover:bg-red-700 text-white font-bold px-10 py-4 rounded-xl shadow-lg transition">Contact Compliance Expert</a>
-                <button onclick="downloadPDF()" class="inline-flex items-center gap-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold px-10 py-4 rounded-xl shadow-lg transition">Download Full Report (PDF)</button>
-              </div>
-            </div>
-          </div>
-          <div id="tab-products" class="tab-panel hidden">
-            <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
-              <h3 class="text-2xl font-bold mb-6">Scanned Products</h3>
-              <div id="products-list" class="space-y-6"></div>
-            </div>
-          </div>
-          <div id="tab-problems" class="tab-panel hidden">...</div>
-          <div id="tab-sanctions" class="tab-panel hidden">...</div>
-          <div id="tab-tariffs" class="tab-panel hidden">...</div>
-        </div>
-        <div class="text-center">
-          <button onclick="rescan()" class="px-8 py-4 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-bold rounded-xl transition">Scan Another Document</button>
-        </div>
-      </div>
+
     </div>
   </section>
 </Layout>
-<script is:inline>
-  function showTab(tabId) {
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-teal-100', 'dark:bg-teal-900/30', 'border-teal-500'));
-    document.getElementById('tab-' + tabId).classList.remove('hidden');
-    event.target.classList.add('bg-teal-100', 'dark:bg-teal-900/30', 'border-teal-500');
-  }
-  function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('border-teal-500', 'bg-teal-50', 'dark:bg-teal-950/30'); }
-  function handleDrop(e) { e.preventDefault(); e.currentTarget.classList.remove('border-teal-500', 'bg-teal-50', 'dark:bg-teal-950/30'); const file = e.dataTransfer.files[0]; if (file) handleFile(file); }
-  function handleFileSelect(e) { const file = e.target.files[0]; if (file) handleFile(file); }
-  function handleFile(file) {
-    document.getElementById('upload-idle').classList.add('hidden');
-    document.getElementById('upload-ready').classList.remove('hidden');
-    document.getElementById('file-name').textContent = file.name;
-    document.getElementById('file-size').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
-    document.getElementById('scan-btn').disabled = false;
-  }
-  function clearFile() {
-    document.getElementById('file-input').value = '';
-    document.getElementById('upload-idle').classList.remove('hidden');
-    document.getElementById('upload-ready').classList.add('hidden');
-    document.getElementById('scan-btn').disabled = true;
-  }
-  function startScan() {
-    document.getElementById('upload-screen').classList.add('hidden');
-    document.getElementById('scanning-screen').classList.remove('hidden');
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
-      document.getElementById('scan-progress').style.width = progress + '%';
-      if (progress >= 100) { clearInterval(interval); showResults(); }
-    }, 300);
-  }
-  function showResults() {
-    document.getElementById('scanning-screen').classList.add('hidden');
-    document.getElementById('results-screen').classList.remove('hidden');
-  }
-  function downloadPDF() { alert('Downloading full report...'); }
-  function rescan() {
-    clearFile();
-    document.getElementById('results-screen').classList.add('hidden');
-    document.getElementById('upload-screen').classList.remove('hidden');
-  }
-  document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('scan-btn').disabled = true;
-    showTab('fix');
-  });
-</script>
-<style>
-  @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  .animate-spin-slow { animation: spin-slow 8s linear infinite; }
-</style>
