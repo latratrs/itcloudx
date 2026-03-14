@@ -1,12 +1,12 @@
 ---
 import { Icon } from 'astro-icon/components';
 import Logo from '~/components/Logo.astro';
-import ToggleTheme from '~/components/common/ToggleTheme.astro';
 import ToggleMenu from '~/components/common/ToggleMenu.astro';
 import { getHomePermalink, trimSlash } from '~/utils/permalinks';
 
 // 1. SHERLOCK FETCH WITH TIMEOUT PROTECTION
-let links = [];
+type NavLink = { text: string; href: string; links?: { text: string; href: string }[] };
+let links: NavLink[] = [];
 try {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 3000);
@@ -101,9 +101,7 @@ const currentPath = `/${trimSlash(new URL(Astro.url).pathname)}`;
     </nav>
 
     <div class="hidden md:flex items-center md:justify-end gap-4">
-      <ToggleTheme iconClass="w-6 h-6 md:w-5 md:h-5" />
-      
-      <a 
+      <a
         href="/audit" 
         class="btn-primary px-5 py-2 text-sm font-semibold rounded-full bg-teal-600 hover:bg-teal-700 text-white transition-all duration-200 shadow-lg hover:shadow-teal-500/30"
       >

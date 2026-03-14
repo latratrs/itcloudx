@@ -57,5 +57,5 @@ export default defineConfig({
       },
     },
   },
-  image: { inferSize: true, domains: ["images.unsplash.com", "plus.unsplash.com", "images.pexels.com", "cdn.pixabay.com"] },
+  image: { domains: ["images.unsplash.com", "plus.unsplash.com", "images.pexels.com", "cdn.pixabay.com"] },
 });

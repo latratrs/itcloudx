@@ -324,8 +324,8 @@ const meta = {
 
 </div>
 
-<script src="https://www.paypal.com/sdk/js?client-id=AQu2DIWmRI5-Lv8n_GnWuY5XjcEpfhTm9Vx8DBGgbh2Rh_nWwyU83OBByfBlr96o4gtotz0pqkjtk6kq&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
-<script>
+<script is:inline src="https://www.paypal.com/sdk/js?client-id=AQu2DIWmRI5-Lv8n_GnWuY5XjcEpfhTm9Vx8DBGgbh2Rh_nWwyU83OBByfBlr96o4gtotz0pqkjtk6kq&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
+<script is:inline>
   var PLANS = {
     proMo:  'P-1NU513273T353600TNGWN7CQ',
     proYr:  'P-7GJ23119F6048484ANGWOEWY',
@@ -338,7 +338,7 @@ const meta = {
     if (!window.paypal) return;
     paypal.Buttons({
       style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'subscribe' },
-      createSubscription: function(d, a) { return a.subscription.create({ plan_id: planId }); },
+      createSubscription: function(_d, a) { return a.subscription.create({ plan_id: planId }); },
       onApprove: function(d) { window.location.href = '/audit?subscriptionId=' + d.subscriptionID; },
       onError: function(e) { console.error('PayPal', e); }
     }).render('#' + cid);

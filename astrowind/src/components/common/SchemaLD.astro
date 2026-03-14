@@ -36,14 +36,14 @@ const isBlogPost = metadata?.title && Astro.url.pathname.includes('/blog/');
 const isHome = Astro.url.pathname === '/';
 ---
 <!-- Organization schema on every page -->
-<script type="application/ld+json" set:html={JSON.stringify(org)} />
+<script is:inline type="application/ld+json" set:html={JSON.stringify(org)} />
 
 <!-- SoftwareApplication schema on homepage -->
-{isHome && <script type="application/ld+json" set:html={JSON.stringify(software)} />}
+{isHome && <script is:inline type="application/ld+json" set:html={JSON.stringify(software)} />}
 
 <!-- Article schema on blog posts -->
 {isBlogPost && (
-  <script type="application/ld+json" set:html={JSON.stringify({
+  <script is:inline type="application/ld+json" set:html={JSON.stringify({
     "@context": "https://schema.org",
     "@type": "Article",
     "headline": metadata.title,

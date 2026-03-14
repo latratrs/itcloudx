@@ -1,4 +1,4 @@
-import { getPermalink, getBlogPermalink, getAsset } from './utils/permalinks';
+import { getPermalink, getBlogPermalink } from './utils/permalinks';
 
 export const headerData = {
   links: [
@@ -34,5 +34,6 @@ export const footerData = {
     { text: 'Terms', href: getPermalink('/terms') },
     { text: 'Privacy', href: getPermalink('/privacy') },
   ],
+  socialLinks: [],
   footNote: `© 2026 TradeShield AI · Powered by <a  class="underline">Deccod</a>`,
 };

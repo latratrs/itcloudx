@@ -8,7 +8,7 @@
     "node": "^18.17.1 || ^20.3.0 || >= 21.0.0"
   },
   "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 4321",
+    "dev": "kill -9 $(lsof -t -i:4321) 2>/dev/null; astro dev --host 0.0.0.0 --port 4321 & sleep 4 && echo '' && echo '=========================================' && echo '🚀 ITCLOUDX DEV READY' && echo 'Local Dev : http://localhost:4321' && echo 'Firebase  : https://itcloudx-com--victory-1773311998-lth3qk3d.web.app/' && echo '=========================================' && echo ''",
     "start": "node ./dist/server/entry.mjs",
     "build": "astro build",
     "preview": "astro preview",
@@ -19,7 +19,8 @@
     "check:prettier": "prettier --check .",
     "fix": "npm run fix:eslint && npm run fix:prettier",
     "fix:eslint": "eslint --fix .",
-    "fix:prettier": "prettier -w ."
+    "fix:prettier": "prettier -w .",
+    "deploy": "firebase hosting:channel:deploy victory --expires 7d | tee deploy.log && echo '' && echo '=========================================' && echo '🔥 FIREBASE DEPLOY COMPLETE' && grep -o 'https://[^ ]*web.app' deploy.log | tail -1 && echo '========================================='"
   },
   "dependencies": {
     "@astrojs/node": "^9.5.4",
