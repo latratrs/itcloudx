@@ -3,9 +3,14 @@ import Layout from '~/layouts/PageLayout.astro';
 import Hero from '~/components/widgets/Hero.astro';
 
 // 1. SHERLOCK FETCH
-const response = await fetch('http://127.0.0.1:3000/api/pages?where[slug][equals]=ai-smb-compliance-mistakes-fix');
-const rawData = await response.json();
-const pageData = rawData.docs?.[0];
+let pageData = null;
+try {
+  const response = await fetch('http://127.0.0.1:3000/api/pages?where[slug][equals]=ai-smb-compliance-mistakes-fix');
+  const rawData = await response.json();
+  pageData = rawData.docs?.[0] ?? null;
+} catch (e) {
+  pageData = null;
+}
 
 let canvasCode = pageData?.canvasCode || '';
 

@@ -1,0 +1,18 @@
+{
+  "hosting": {
+    "public": "astrowind/dist",
+    "cleanUrls": true,
+    "trailingSlash": false,
+    "redirects": [
+      {"source": "/desktop-as-a-service", "destination": "/services", "type": 301},
+      {"source": "/cyber-security", "destination": "/services", "type": 301},
+      {"source": "/hosted-pbx", "destination": "/services", "type": 301},
+      {"source": "/communication-solutions", "destination": "/services", "type": 301},
+      {"source": "/it-services", "destination": "/", "type": 301},
+      {"source": "/managed-services", "destination": "/services", "type": 301}
+    ],
+    "rewrites": [
+      {"source": "**", "destination": "/404.html"}
+    ]
+  }
+}

@@ -9,7 +9,7 @@ const metadata = {
 <Layout metadata={metadata}>
   <section class="min-h-screen bg-gradient-to-b from-white to-[#f7f5f0] dark:from-gray-950 dark:to-gray-900 transition-colors duration-300">
     <div class="max-w-5xl mx-auto px-6 py-16 md:py-24">
-      <div id="upload-screen" class="space-y-12">
+      <div id="screen-upload" class="space-y-12">
         <div class="text-center">
           <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white leading-tight">
             Free Compliance Audit
@@ -21,16 +21,16 @@ const metadata = {
         <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-8 md:p-12">
           <div id="drop-zone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl p-12 text-center cursor-pointer hover:border-teal-500 dark:hover:border-teal-400 transition-colors" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" onclick="document.getElementById('file-input').click()">
             <input type="file" id="file-input" accept=".pdf,.csv,.xlsx,.xls,.jpg,.jpeg,.png,.tiff,.tif" class="hidden" onchange="handleFileSelect(event)">
-            <div id="upload-idle">
+            <div id="drop-idle">
               <div class="text-6xl mb-6">📄</div>
               <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Drop your document here</h3>
               <p class="text-gray-500 dark:text-gray-400">PDF · CSV · Excel · JPG · PNG · TIFF (max 25MB)</p>
               <button class="mt-6 px-8 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl transition">Choose File</button>
             </div>
-            <div id="upload-ready" class="hidden">
+            <div id="drop-ready" class="hidden">
               <div class="text-6xl mb-6">📎</div>
-              <h3 id="file-name" class="text-xl font-bold text-gray-900 dark:text-white mb-2"></h3>
-              <p id="file-size" class="text-gray-500 dark:text-gray-400"></p>
+              <h3 id="drop-filename" class="text-xl font-bold text-gray-900 dark:text-white mb-2"></h3>
+              <p id="drop-filesize" class="text-gray-500 dark:text-gray-400"></p>
               <button onclick="clearFile()" class="mt-6 text-red-600 dark:text-red-400 hover:text-red-700 font-medium">Remove file</button>
             </div>
           </div>
@@ -74,111 +74,344 @@ const metadata = {
           </div>
         </div>
       </div>
-      <div id="scanning-screen" class="hidden flex flex-col items-center justify-center min-h-[60vh] space-y-8">
-        <div class="relative w-32 h-32">
-          <div class="absolute inset-0 rounded-full bg-teal-500/20 animate-ping"></div>
-          <div class="absolute inset-4 rounded-full bg-teal-600/30 animate-pulse"></div>
-          <div class="absolute inset-0 flex items-center justify-center text-6xl animate-spin-slow">🔍</div>
+      <div id="screen-scan" class="hidden flex flex-col items-center justify-center min-h-[60vh] space-y-8">
+        <div class="relative w-28 h-28 mb-8 pulse-shield">
+          <div class="absolute inset-0 rounded-full bg-teal-400/20 animate-ping"></div>
+          <div class="absolute inset-3 rounded-full bg-teal-500/30 animate-pulse"></div>
+          <div class="absolute inset-0 flex items-center justify-center text-5xl">🛡️</div>
         </div>
         <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Analyzing your document…</h2>
         <div class="w-96 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
           <div id="scan-progress" class="bg-teal-600 h-2 rounded-full w-0 transition-all duration-300"></div>
         </div>
-        <p class="text-gray-600 dark:text-gray-400">Usually completes in 10–20 seconds</p>
+        <div id='step-1' class='flex items-center gap-3 text-gray-700 dark:text-gray-200'><span class='text-teal-500 font-bold'>✓</span> 📄 Parsing document</div>
+        <div id='step-2' class='flex items-center gap-3 text-gray-400'><span>○</span> 🏷️ Classifying HS codes</div>
+        <div id='step-3' class='flex items-center gap-3 text-gray-400'><span>○</span> 🛡️ Screening sanctions lists</div>
+        <div id='step-4' class='flex items-center gap-3 text-gray-400'><span>○</span> 💰 Calculating tariff exposure</div>
+        <div id='step-5' class='flex items-center gap-3 text-gray-400'><span>○</span> 📋 Building action plan</div>
+        <p class="text-gray-600 dark:text-gray-400">Usually completes in 30–45 seconds</p>
       </div>
-      <div id="results-screen" class="hidden space-y-12">
-        <div class="text-center">
-          <div class="inline-block px-8 py-4 rounded-full text-3xl font-black mb-4 bg-red-600 text-white animate-pulse" id="risk-badge">Risk Score: 75/100</div>
-          <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-4">Shipment Hold Recommended</h2>
-          <p class="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">1 product flagged as HIGH risk. Review details below before proceeding.</p>
-        </div>
-        <div class="flex flex-wrap gap-4 justify-center border-b border-gray-200 dark:border-gray-700 pb-4">
-          <button onclick="showTab('products')" class="tab-btn px-6 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 font-medium transition">Products</button>
-          <button onclick="showTab('problems')" class="tab-btn px-6 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 font-medium transition">Problems Found</button>
-          <button onclick="showTab('sanctions')" class="tab-btn px-6 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 font-medium transition">Sanctions</button>
-          <button onclick="showTab('tariffs')" class="tab-btn px-6 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 font-medium transition">Tariffs</button>
-          <button onclick="showTab('fix')" class="tab-btn px-6 py-3 rounded-xl bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-800 font-medium transition border border-red-500">Fix It</button>
-        </div>
-        <div id="tab-content" class="space-y-8">
-          <div id="tab-fix" class="tab-panel">
-            <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
-              <h3 class="text-2xl md:text-3xl font-bold text-red-600 dark:text-red-400 mb-6">Your Step-by-Step Fix Plan</h3>
-              <div class="bg-red-50 dark:bg-red-950/30 border-l-4 border-red-500 p-6 rounded-xl">
-                <p class="font-medium text-lg mb-4">REVIEW — Diagnostic Specimens: tissue or bodily fluid, possibly infected with Bartonella spp bacteria</p>
-                <p class="text-gray-700 dark:text-gray-300">Import of biological specimens requires specific permits (e.g., CDC import permit for etiologic agents) and strict adherence to IATA/DOT dangerous goods regulations. The commercial invoice does not indicate these critical permits.</p>
-              </div>
-              <div class="mt-8 flex flex-col sm:flex-row gap-6 justify-center">
-                <a href="/contact" class="inline-flex items-center gap-3 bg-red-600 hover:bg-red-700 text-white font-bold px-10 py-4 rounded-xl shadow-lg transition">Contact Compliance Expert</a>
-                <button onclick="downloadPDF()" class="inline-flex items-center gap-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold px-10 py-4 rounded-xl shadow-lg transition">Download Full Report (PDF)</button>
-              </div>
-            </div>
+<div id="screen-result" class="hidden">
+  <div class="bg-[#0b1e3d] text-white py-10 px-6">
+    <div class="max-w-5xl mx-auto flex flex-col md:flex-row gap-8 items-start">
+      <div class="flex-1">
+        <span class="inline-block bg-teal-500/20 text-teal-300 border border-teal-500/30 text-xs font-bold tracking-widest px-4 py-1 rounded-full mb-4">AUDIT COMPLETE</span>
+        <h2 class="text-4xl font-black leading-tight mb-2">Your <span id="res-icon">⚠️</span> <em id="res-verdict" class="not-italic text-yellow-400">Needs Review</em></h2>
+        <p id="res-meta" class="text-white/40 font-mono text-xs tracking-wide mb-3"></p>
+        <p id="res-summary" class="text-gray-300 text-base leading-relaxed"></p>
+      </div>
+      <div class="bg-white/10 border border-white/20 rounded-2xl p-6 text-center min-w-[140px]">
+        <div id="res-score-num" class="text-5xl font-black text-yellow-400">0</div>
+        <div class="text-xs font-bold tracking-widest text-white/40 mt-1">RISK SCORE</div>
+        <div id="res-score-label" class="mt-2 bg-white/10 text-white text-xs font-bold px-3 py-1 rounded-full">REVIEW</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-[#0d2347] border-t border-white/10 sticky top-0 z-30">
+    <div class="max-w-5xl mx-auto flex overflow-x-auto">
+      <button onclick="switchTab('products')" id="tab-btn-products" class="tab-btn tab-active px-5 py-4 text-sm font-semibold whitespace-nowrap border-b-2 border-transparent transition-all text-white">📦 Products</button>
+      <button onclick="switchTab('problems')" id="tab-btn-problems" class="tab-btn px-5 py-4 text-sm font-semibold whitespace-nowrap text-white/50 border-b-2 border-transparent hover:text-white transition-all">🔴 Problems Found</button>
+      <button onclick="switchTab('sanctions')" id="tab-btn-sanctions" class="tab-btn px-5 py-4 text-sm font-semibold whitespace-nowrap text-white/50 border-b-2 border-transparent hover:text-white transition-all">🛡️ Sanctions</button>
+      <button onclick="switchTab('tariffs')" id="tab-btn-tariffs" class="tab-btn px-5 py-4 text-sm font-semibold whitespace-nowrap text-white/50 border-b-2 border-transparent hover:text-white transition-all">💰 Tariffs</button>
+      <button onclick="switchTab('action')" id="tab-btn-action" class="tab-btn px-5 py-4 text-sm font-semibold whitespace-nowrap text-white/50 border-b-2 border-transparent hover:text-white transition-all">⚡ Fix It</button>
+    </div>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 py-10 space-y-6">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center shadow border border-gray-100 dark:border-gray-700"><div id="stat-total" class="text-3xl font-black text-gray-900 dark:text-white">0</div><div class="text-xs text-gray-500 mt-1">Total Scanned</div></div>
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center shadow border border-gray-100 dark:border-gray-700"><div id="stat-cleared" class="text-3xl font-black text-green-600">0</div><div class="text-xs text-gray-500 mt-1">✅ Cleared</div></div>
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center shadow border border-gray-100 dark:border-gray-700"><div id="stat-review" class="text-3xl font-black text-yellow-500">0</div><div class="text-xs text-gray-500 mt-1">⚠️ Review</div></div>
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center shadow border border-gray-100 dark:border-gray-700"><div id="stat-flagged" class="text-3xl font-black text-red-600">0</div><div class="text-xs text-gray-500 mt-1">🚨 Flagged</div></div>
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center shadow border border-gray-100 dark:border-gray-700"><div id="stat-score" class="text-3xl font-black text-gray-900 dark:text-white">0/100</div><div class="text-xs text-gray-500 mt-1">Risk Score</div></div>
+    </div>
+
+    <div id="res-alert" class="hidden rounded-xl p-4 flex gap-3 items-start text-base font-medium"></div>
+
+    <div id="tab-products" class="tab-panel space-y-4"></div>
+
+    <div id="tab-problems" class="tab-panel hidden space-y-4">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">What's Wrong — and How to Fix It</h3>
+        <p class="text-gray-500 text-sm mb-6">Plain-English breakdown of every compliance issue found.</p>
+        <div id="doc-visual-wrap" class="hidden mb-6">
+          <h4 class="text-base font-bold text-gray-700 dark:text-gray-300 mb-3">🔍 Your Document — Problem Areas</h4>
+          <div class="doc-container rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+            <img id="doc-visual-img" src="" class="w-full object-contain rounded-xl">
+            <div id="doc-markers"></div>
           </div>
-          <div id="tab-products" class="tab-panel hidden">
-            <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
-              <h3 class="text-2xl font-bold mb-6">Scanned Products</h3>
-              <div id="products-list" class="space-y-6"></div>
-            </div>
-          </div>
-          <div id="tab-problems" class="tab-panel hidden">...</div>
-          <div id="tab-sanctions" class="tab-panel hidden">...</div>
-          <div id="tab-tariffs" class="tab-panel hidden">...</div>
+          <div id="doc-legend" class="flex flex-wrap gap-3 mt-3"></div>
         </div>
-        <div class="text-center">
-          <button onclick="rescan()" class="px-8 py-4 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-bold rounded-xl transition">Scan Another Document</button>
+        <div id="problems-list" class="space-y-4"></div>
+        <div id="problems-positives-wrap" class="hidden mt-4 bg-green-50 dark:bg-green-950/30 border-l-4 border-green-500 rounded-xl p-5">
+          <div class="font-bold text-green-700 dark:text-green-400 mb-2">✅ What you did right</div>
+          <div id="problems-positives" class="text-sm text-green-800 dark:text-green-300 leading-relaxed"></div>
         </div>
       </div>
+    </div>
+
+    <div id="tab-sanctions" class="tab-panel hidden">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">🛡️ Sanctions Screening Results</h3>
+        <div id="sanctions-content" class="space-y-3 text-base leading-relaxed"></div>
+      </div>
+    </div>
+
+    <div id="tab-tariffs" class="tab-panel hidden">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">💰 Tariff Exposure Breakdown</h3>
+        <div id="tariffs-content" class="space-y-3"></div>
+      </div>
+    </div>
+
+    <div id="tab-action" class="tab-panel hidden space-y-4">
+      <h3 class="text-2xl font-black text-teal-600 dark:text-teal-400">⚡ Your Step-by-Step Fix Plan</h3>
+      <div id="action-holds" class="space-y-4"></div>
+      <div id="action-reviews" class="space-y-4"></div>
+      <div id="action-approves" class="space-y-4"></div>
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6 mt-2">
+        <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-4">📋 2026 Compliance Checklist</h4>
+        <div id="checklist-box" class="space-y-3 text-base"></div>
+      </div>
+      <div id="pdf-download-box" class="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-2xl p-6 text-center">
+        <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-2">📄 Download Your Compliance Report</h4>
+        <p class="text-gray-500 text-sm mb-4">Full PDF with HS codes, sanctions results, tariff breakdown, and action steps.</p>
+        <button onclick="downloadPDF()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-8 py-3 rounded-xl transition text-base">⬇ Download PDF Report</button>
+      </div>
+    </div>
+
+    <div class="bg-gradient-to-br from-[#0b1e3d] to-[#0a3d62] rounded-2xl p-8 text-center text-white">
+      <h3 class="text-2xl font-black mb-2">Need a Deeper Audit?</h3>
+      <p class="text-gray-300 text-sm mb-6">Pro plan: unlimited scans, real-time tariff alerts, full OFAC+UN+EU screening, clean PDF reports.</p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="/pricing" class="bg-teal-500 hover:bg-teal-400 text-white font-bold px-8 py-3 rounded-xl transition">Upgrade to Pro — $299/mo</a>
+        <button onclick="rescan()" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold px-8 py-3 rounded-xl transition">🔄 Scan Another Document</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id='screen-error' class='hidden max-w-2xl mx-auto px-6 py-20 text-center'>
+  <div class='text-6xl mb-6'>⚠️</div>
+  <h2 class='text-2xl font-black text-gray-900 dark:text-white mb-4'>Scan Failed</h2>
+  <p id='error-msg' class='text-gray-500 text-lg mb-8'>Something went wrong. Please try again.</p>
+  <button onclick='rescan()' class='px-8 py-4 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl transition'>Try Again</button>
+</div>
     </div>
   </section>
 </Layout>
 <script is:inline>
-  function showTab(tabId) {
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-teal-100', 'dark:bg-teal-900/30', 'border-teal-500'));
-    document.getElementById('tab-' + tabId).classList.remove('hidden');
-    event.target.classList.add('bg-teal-100', 'dark:bg-teal-900/30', 'border-teal-500');
-  }
-  function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('border-teal-500', 'bg-teal-50', 'dark:bg-teal-950/30'); }
-  function handleDrop(e) { e.preventDefault(); e.currentTarget.classList.remove('border-teal-500', 'bg-teal-50', 'dark:bg-teal-950/30'); const file = e.dataTransfer.files[0]; if (file) handleFile(file); }
-  function handleFileSelect(e) { const file = e.target.files[0]; if (file) handleFile(file); }
-  function handleFile(file) {
-    document.getElementById('upload-idle').classList.add('hidden');
-    document.getElementById('upload-ready').classList.remove('hidden');
-    document.getElementById('file-name').textContent = file.name;
-    document.getElementById('file-size').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
-    document.getElementById('scan-btn').disabled = false;
-  }
-  function clearFile() {
-    document.getElementById('file-input').value = '';
-    document.getElementById('upload-idle').classList.remove('hidden');
-    document.getElementById('upload-ready').classList.add('hidden');
-    document.getElementById('scan-btn').disabled = true;
-  }
-  function startScan() {
-    document.getElementById('upload-screen').classList.add('hidden');
-    document.getElementById('scanning-screen').classList.remove('hidden');
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
-      document.getElementById('scan-progress').style.width = progress + '%';
-      if (progress >= 100) { clearInterval(interval); showResults(); }
-    }, 300);
-  }
-  function showResults() {
-    document.getElementById('scanning-screen').classList.add('hidden');
-    document.getElementById('results-screen').classList.remove('hidden');
-  }
-  function downloadPDF() { alert('Downloading full report...'); }
-  function rescan() {
-    clearFile();
-    document.getElementById('results-screen').classList.add('hidden');
-    document.getElementById('upload-screen').classList.remove('hidden');
-  }
-  document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('scan-btn').disabled = true;
-    showTab('fix');
+const FUNCTION_URL='https://trade-vision-scan-tmv6tfm3wa-uc.a.run.app';
+const MIN_SCAN_MS=12000;
+let selectedFile=null,previewDataURL=null,lastResult=null;
+
+function handleDragOver(e){e.preventDefault();e.currentTarget.classList.add('border-teal-500','bg-teal-50/50');}
+function handleDrop(e){e.preventDefault();e.currentTarget.classList.remove('border-teal-500','bg-teal-50/50');if(e.dataTransfer.files.length)setFile(e.dataTransfer.files[0]);}
+function handleFileSelect(e){if(e.target.files[0])setFile(e.target.files[0]);}
+function setFile(file){
+  selectedFile=file;
+  document.getElementById('drop-idle').classList.add('hidden');
+  document.getElementById('drop-ready').classList.remove('hidden');
+  document.getElementById('drop-filename').textContent=file.name;
+  document.getElementById('drop-filesize').textContent=(file.size/1024/1024).toFixed(2)+' MB';
+  document.getElementById('scan-btn').disabled=false;
+  if(file.type.startsWith('image/')){const r=new FileReader();r.onload=e=>{previewDataURL=e.target.result;const pi=document.getElementById('preview-img-upload');const dp=document.getElementById('doc-preview-upload');if(pi)pi.src=previewDataURL;if(dp)dp.classList.remove('hidden');};r.readAsDataURL(file);}
+}
+function clearFile(){
+  selectedFile=null;previewDataURL=null;
+  document.getElementById('file-input').value='';
+  document.getElementById('drop-idle').classList.remove('hidden');
+  document.getElementById('drop-ready').classList.add('hidden');
+  const dp2=document.getElementById('doc-preview-upload');if(dp2)dp2.classList.add('hidden');
+  document.getElementById('scan-btn').disabled=true;
+}
+function startScan(){
+  const email=document.getElementById('email').value.trim();
+  if(!email){alert('Please enter your email address.');return;}
+  if(!selectedFile){alert('Please select a file.');return;}
+  lastResult=null;
+  document.getElementById('res-score-num').textContent='—';
+  document.getElementById('res-meta').innerHTML='';
+  document.getElementById('res-summary').textContent='';
+  show('screen-scan');hide('screen-upload');
+  const scanEl=document.getElementById('screen-scan');
+  const rect=scanEl.getBoundingClientRect();const absoluteTop=rect.top+window.pageYOffset;window.scrollTo({top:absoluteTop-80,behavior:'smooth'});
+  [1,2,3,4,5].forEach((s,i)=>setTimeout(()=>{
+    const el=document.getElementById('step-'+s);
+    if(!el)return;
+    el.querySelector('span').textContent='✓';
+    el.classList.remove('text-gray-400');el.classList.add('text-gray-700','dark:text-gray-200');
+    document.getElementById('scan-progress').style.width=((i+1)/5*85)+'%';
+  },i*2400));
+  const fd=new FormData();
+  fd.append('file',selectedFile);fd.append('email',email);
+  const co=document.getElementById('company').value.trim();if(co)fd.append('company',co);
+  const fetchPromise=fetch(FUNCTION_URL,{method:'POST',body:fd}).then(r=>{if(r.status===429)throw new Error('429 limit reached');return r.json();}).then(d=>{if(d.error&&d.error.includes('limit'))throw new Error('429 limit reached');return d;});
+  const timerPromise=new Promise(resolve=>setTimeout(resolve,12000));
+  Promise.all([fetchPromise,timerPromise])
+    .then(([data])=>{
+      document.getElementById('scan-progress').style.width='100%';
+      lastResult=data;
+      requestAnimationFrame(()=>renderResults(data));
+    })
+    .catch(err=>{hide('screen-scan');const em=document.getElementById('error-msg');if(em){const msg=err.message||'';em.innerHTML=msg.includes('429')||msg.includes('limit')?'<strong>Scan limit reached.</strong> You have used all 5 free scans this month. <a href="/pricing" class="underline text-teal-400">Upgrade to Pro</a> for unlimited scans.':msg||'Network error. Please try again.';}show('screen-error');});
+}
+function riskColor(r){return r==='HIGH'?'#ef4444':r==='MEDIUM'?'#f59e0b':'#22c55e';}
+function riskIcon(r){return r==='HIGH'?'🚨':r==='MEDIUM'?'⚠️':'✅';}
+function riskBadge(r){
+  const cls=r==='HIGH'?'bg-red-100 text-red-700':'bg-yellow-100 text-yellow-700';
+  return r==='LOW'?'<span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">✅ LOW</span>':`<span class="inline-block px-3 py-1 rounded-full text-xs font-bold ${cls}">${riskIcon(r)} ${r}</span>`;
+}
+function renderResults(data){
+  hide('screen-scan');
+  show('screen-result');
+  void document.getElementById('screen-result').offsetHeight;
+  const SR=document.getElementById('screen-result');
+  const products=data.products||[];
+  const ship=data.shipment_summary||{};
+  const score=ship.overall_risk_score||data.overall_risk_score||0;
+  const rec=(ship.overall_recommendation||data.recommendation||'REVIEW').toUpperCase();
+  const scoreColor=score>=67?'#ef4444':score>=34?'#f59e0b':'#22c55e';
+  const verdictText=rec.includes('HOLD')?'HOLD — Action Required':rec==='APPROVE'?'Cleared ✓':'Needs Review';
+  const verdictCls=score>=67?'text-red-400':score>=34?'text-yellow-400':'text-green-400';
+  SR.querySelector('#res-score-num').textContent=score;
+  SR.querySelector('#res-score-num').style.color=scoreColor;
+  SR.querySelector('#res-verdict').textContent=verdictText;
+  SR.querySelector('#res-verdict').className='not-italic '+verdictCls;
+  SR.querySelector('#res-score-label').textContent=rec;
+  SR.querySelector('#res-icon').textContent=score>=67?'🚨':score>=34?'⚠️':'✅';
+  SR.querySelector('#res-summary').textContent=ship.summary||data.summary||'';
+  SR.querySelector('#res-meta').innerHTML='JOB: '+(data.job_id||data.jobId||'—')+' — COMPANY: '+(data.company_name||data.company||'—')+' — '+new Date().toDateString().toUpperCase()+'<br/><span class="text-teal-400 font-bold tracking-widest mt-2 inline-block">🛡️ SCANNED BY SHERLOCK VISION API</span>';
+  let cleared=0,review=0,flagged=0;
+  products.forEach(p=>{const r=(p.risk_level||'').toUpperCase();if(r==='LOW')cleared++;else if(r==='HIGH')flagged++;else review++;});
+  SR.querySelector('#stat-total').textContent=products.length;
+  SR.querySelector('#stat-cleared').textContent=cleared;
+  SR.querySelector('#stat-review').textContent=review;
+  SR.querySelector('#stat-flagged').textContent=flagged;
+  SR.querySelector('#stat-score').textContent=score+'/100';
+  if(flagged>0){const al=SR.querySelector('#res-alert');al.className='rounded-xl p-4 flex gap-3 items-start text-base font-medium bg-red-50 dark:bg-red-950/30 border border-red-200 text-red-800';al.innerHTML='<span class="text-xl">🚨</span><div><strong>Shipment Hold Recommended.</strong> '+flagged+' product'+(flagged!==1?'s':'')+' flagged as HIGH risk. Review "Problems Found" and "Fix It" tabs.</div>';al.classList.remove('hidden');}
+  renderProducts(products,data);renderProblems(products,data);renderSanctions(products,data);renderTariffs(products);renderFixIt(products);renderChecklist(products);
+  if(previewDataURL){const vi=SR.querySelector('#doc-visual-img');const vw=SR.querySelector('#doc-visual-wrap');if(vi&&vw){vi.src=previewDataURL;vw.classList.remove('hidden');renderMarkers(products);}}
+}
+function renderProducts(products,data){
+  const el=document.getElementById('screen-result').querySelector('#tab-products');
+  if(!products.length){el.innerHTML='<p class="text-gray-500">No products extracted.</p>';return;}
+  el.innerHTML=products.map((p,i)=>{
+    const r=(p.risk_level||'LOW').toUpperCase();
+    return '<div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 overflow-hidden slide-up" style="animation-delay:'+(i*0.08)+'s">'+
+      '<div class="p-5 flex gap-4 items-start cursor-pointer" onclick="toggleProd('+i+')">'+
+        '<div class="flex-1"><div class="flex flex-wrap gap-2 items-center mb-2">'+riskBadge(r)+'<span class="font-bold text-gray-900 dark:text-white text-base">'+p.name+'</span></div>'+
+        '<div class="flex flex-wrap gap-4 text-sm text-gray-500"><span>HS <strong class="text-gray-800 dark:text-gray-200">'+(p.hs_code||'—')+'</strong></span><span>Duty <strong class="text-gray-800 dark:text-gray-200">'+(p.duty_rate||'—')+'</strong></span><span>Risk <strong style="color:'+riskColor(r)+'">'+(p.risk_score||0)+'/100</strong></span></div></div>'+
+        '<span class="text-gray-400 text-sm mt-1" id="prod-chevron-'+i+'">'+(i===0?'▲':'▼')+'</span>'+
+      '</div>'+
+      '<div id="prod-detail-'+i+'" class="'+(i===0?'':'hidden')+' border-t border-gray-100 dark:border-gray-700 p-5 space-y-3 text-sm">'+
+        '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">'+
+          '<div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-3"><div class="text-xs text-gray-400 mb-1">HS Code</div><div class="font-bold text-gray-900 dark:text-white">'+(p.hs_code||'—')+'</div></div>'+
+          '<div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-3"><div class="text-xs text-gray-400 mb-1">Base Duty</div><div class="font-bold">'+(p.duty_rate||'—')+'</div></div>'+
+          '<div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-3"><div class="text-xs text-gray-400 mb-1">Tariff Layers</div><div class="font-bold">'+(p.tariff_layers||'—')+'</div></div>'+
+          '<div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-3"><div class="text-xs text-gray-400 mb-1">Sanctions</div><div class="font-bold">'+(p.sanctions_status||'—')+'</div></div>'+
+        '</div>'+
+        '<div class="rounded-xl p-4 border" style="background:'+(r==='HIGH'?'#fef2f2':r==='MEDIUM'?'#fffbeb':'#f0fdf4')+'">'+
+          '<div class="font-bold mb-1" style="color:'+riskColor(r)+'">'+(p.recommended_action||'REVIEW')+'</div>'+
+          '<div class="text-gray-700 dark:text-gray-300 leading-relaxed text-base">'+(p.compliance_notes||'—')+'</div>'+
+        '</div>'+
+      '</div></div>';
+  }).join('');
+}
+function toggleProd(i){const d=document.getElementById('prod-detail-'+i);const c=document.getElementById('prod-chevron-'+i);const h=d.classList.toggle('hidden');c.textContent=h?'▼':'▲';}
+function renderProblems(products,data){
+  const el=document.getElementById('screen-result').querySelector('#problems-list');
+  const highrisk=products.filter(p=>(p.risk_level||'').toUpperCase()!=='LOW');
+  if(!highrisk.length){el.innerHTML='<div class="bg-green-50 border border-green-200 rounded-xl p-6 text-green-700 font-medium">✅ No compliance problems found.</div>';return;}
+  el.innerHTML=highrisk.map((p,i)=>{
+    const r=(p.risk_level||'MEDIUM').toUpperCase();
+    const steps=Array.isArray(p.fix_steps)?p.fix_steps:(p.compliance_notes?[p.compliance_notes]:[]);
+    return '<div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 overflow-hidden">'+
+      '<div class="p-5" style="background:'+(r==='HIGH'?'#fef2f2':'#fffbeb')+'">'+
+        '<div class="flex gap-3 items-start">'+
+          '<span class="text-2xl mt-0.5">'+riskIcon(r)+'</span>'+
+          '<div class="flex-1"><div class="font-bold text-lg text-gray-900 mb-1">'+'</div><div class="text-base text-gray-700 leading-relaxed">'+(p.compliance_notes||'Review required.')+'</div></div>'+
+          riskBadge(r)+
+        '</div></div>'+
+      (steps.length?'<div class="p-5 border-t border-gray-100 dark:border-gray-700"><div class="text-xs font-bold font-mono tracking-widest text-teal-600 mb-3">🔧 HOW TO FIX THIS</div><div class="space-y-2">'+
+        steps.map((s,n)=>'<div class="flex gap-3 text-base text-gray-700 dark:text-gray-300 py-2 border-b border-gray-100 last:border-0"><span class="text-teal-600 font-bold flex-shrink-0">'+
+            (n+1)+'.</span><span>'+s+'</span></div>').join('')+
+      '</div></div>':'')+
+    '</div>';
+  }).join('');
+  const pos=data.shipment_summary?.positives||data.positives||'';
+  if(pos){document.getElementById('screen-result').querySelector('#problems-positives').textContent=pos;document.getElementById('screen-result').querySelector('#problems-positives-wrap').classList.remove('hidden');}
+}
+function renderSanctions(products,data){
+  const el=document.getElementById('screen-result').querySelector('#sanctions-content');
+  el.innerHTML=products.map(p=>{
+    const s=(p.sanctions_status||'').toUpperCase();
+    const icon=s.includes('CLEAR')?'✅':s.includes('MATCH')?'🚨':'⚠️';
+    const cls=s.includes('CLEAR')?'bg-green-50 border-green-200':'bg-red-50 border-red-200';
+    return '<div class="'+cls+' border rounded-xl p-4 flex gap-3 items-start"><span class="text-xl">'+icon+'</span><div><div class="font-bold text-gray-900 dark:text-white">'+p.name+'</div><div class="text-gray-600 dark:text-gray-400 text-sm mt-1">'+(p.sanctions_notes||p.compliance_notes||'Screened against OFAC SDN, EU Consolidated, and UN lists.')+'</div></div></div>';
+  }).join('')||'<p class="text-gray-500">No sanctions data.</p>';
+}
+function renderTariffs(products){
+  document.getElementById('screen-result').querySelector('#tariffs-content').innerHTML=products.map(p=>
+    '<div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5"><div class="font-bold text-gray-900 dark:text-white mb-3">'+p.name+'</div>'+
+    '<div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">'+
+      '<div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3"><div class="text-xs text-gray-400 mb-1">HS Code</div><div class="font-bold">'+(p.hs_code||'—')+'</div></div>'+
+      '<div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3"><div class="text-xs text-gray-400 mb-1">Base Duty</div><div class="font-bold">'+(p.duty_rate||'—')+'</div></div>'+
+      '<div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3"><div class="text-xs text-gray-400 mb-1">Tariff Layers</div><div class="font-bold">'+(p.tariff_layers||'—')+'</div></div>'+
+    '</div></div>'
+  ).join('')||'<p class="text-gray-500">No tariff data.</p>';
+}
+function renderFixIt(products){
+  const byAction={HOLD:[],REVIEW:[],APPROVE:[]};
+  products.forEach(p=>{const a=(p.recommended_action||'REVIEW').toUpperCase();if(a.includes('HOLD'))byAction.HOLD.push(p);else if(a.includes('APPROVE')||a.includes('CLEAR'))byAction.APPROVE.push(p);else byAction.REVIEW.push(p);});
+  const rg=(items,color,icon,label)=>items.map(p=>
+    '<div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 overflow-hidden">'+
+    '<div class="px-5 py-4" style="border-left:4px solid '+color+'"><div class="font-bold text-base mb-1" style="color:'+color+'">'+icon+' '+label+' — '+p.name+'</div>'+
+    '<div class="text-base text-gray-600 dark:text-gray-300 leading-relaxed">'+(p.compliance_notes||'—')+'</div></div></div>'
+  ).join('');
+  document.getElementById('screen-result').querySelector('#action-holds').innerHTML=rg(byAction.HOLD,'#ef4444','🚨','HOLD');
+  document.getElementById('screen-result').querySelector('#action-reviews').innerHTML=rg(byAction.REVIEW,'#f59e0b','⚠️','REVIEW');
+  document.getElementById('screen-result').querySelector('#action-approves').innerHTML=rg(byAction.APPROVE,'#22c55e','✅','APPROVE');
+}
+function renderChecklist(products){
+  const items=[[true,'HS codes classified using HTSUS 2026 schedule'],[true,'OFAC SDN sanctions screening completed'],[true,'EU & UN consolidated sanctions lists checked'],[products.every(p=>(p.risk_level||'').toUpperCase()!=='HIGH'),'No high-risk items detected'],[false,'Commercial invoice matches packing list (verify manually)']];
+  document.getElementById('screen-result').querySelector('#checklist-box').innerHTML=items.map(([done,text])=>
+    '<div class="flex gap-3 items-center text-base '+(done?'text-gray-800 dark:text-gray-200':'text-gray-400')+'"><span class="text-lg">'+(done?'✅':'⬜')+'</span><span>'+text+'</span></div>'
+  ).join('');
+}
+function renderMarkers(products){
+  const el=document.getElementById('screen-result')?.querySelector('#doc-markers');const legend=document.getElementById('screen-result')?.querySelector('#doc-legend');if(!el||!legend)return;
+  el.innerHTML='';legend.innerHTML='';
+  const colors=['#ef4444','#f59e0b','#8b5cf6','#3b82f6','#ec4899'];
+  products.forEach((p,i)=>{
+    const top=15+(i*20)%60;const left=5+(i*15)%25;const c=colors[i%colors.length];
+    el.innerHTML+='<div class="doc-marker" style="top:'+top+'%;left:'+left+'%;width:55%;height:10%;border-color:'+c+'"><div class="doc-marker-label" style="background:'+c+'">'+(i+1)+'. '+p.name.substring(0,25)+'</div></div>';
+    legend.innerHTML+='<div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"><div class="w-3 h-3 rounded-sm" style="background:'+c+'"></div>'+(i+1)+'. '+p.name.substring(0,30)+'</div>';
   });
+}
+function switchTab(tab){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.remove('tab-active');b.classList.add('text-white/50');});
+  document.getElementById('tab-'+tab).classList.remove('hidden');
+  const btn=document.getElementById('tab-btn-'+tab);btn.classList.add('tab-active');btn.classList.remove('text-white/50');
+}
+function downloadPDF(){
+  if(!lastResult)return;
+  if(lastResult.pdf_error){alert('PDF Error: '+lastResult.pdf_error);return;}
+  if(!lastResult.pdf_report){alert('PDF not available — please rescan.');return;}
+  const link=document.createElement('a');
+  link.href='data:application/pdf;base64,'+lastResult.pdf_report;
+  link.download='TradeShield_Report_'+(lastResult.job_id||'audit')+'.pdf';
+  document.body.appendChild(link);link.click();document.body.removeChild(link);
+}
+function rescan(){lastResult=null;selectedFile=null;previewDataURL=null;clearFile();hide('screen-result');hide('screen-error');show('screen-upload');window.scrollTo({top:0,behavior:'smooth'});}
+function show(id){document.getElementById(id).classList.remove('hidden');}
+function hide(id){document.getElementById(id).classList.add('hidden');}
+window.startScan=startScan;window.clearFile=clearFile;window.switchTab=switchTab;window.toggleProd=toggleProd;window.rescan=rescan;window.downloadPDF=downloadPDF;window.handleDrop=handleDrop;window.handleDragOver=handleDragOver;window.handleFileSelect=handleFileSelect;
 </script>
 <style>
   @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .animate-spin-slow { animation: spin-slow 8s linear infinite; }
+  .pulse-shield { animation: pulseShield 2s ease-in-out infinite; }
+  @keyframes pulseShield { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
 </style>

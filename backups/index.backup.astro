@@ -635,7 +635,7 @@ function renderResults(data){
   document.getElementById('res-score-label').textContent=rec;
   document.getElementById('res-icon').textContent=score>=67?'🚨':score>=34?'⚠️':'✅';
   document.getElementById('res-summary').textContent=ship.summary||data.summary||'';
-  document.getElementById('res-meta').innerHTML='JOB: '+(data.job_id||'—')+' — COMPANY: '+(data.company_name||data.company||'—')+' — '+new Date().toDateString().toUpperCase()+' — '+products.length+' PRODUCTS'+(data.scanner_type?'<br/><span class="text-teal-400 font-bold">🛡️ SCANNED BY '+data.scanner_type+'</span>':'');
+  document.getElementById('res-meta').textContent='JOB: '+(data.job_id||'—')+'  COMPANY: '+(data.company||'—')+'  '+new Date().toDateString().toUpperCase()+'  '+products.length+' PRODUCTS';
   let cleared=0,review=0,flagged=0;
   products.forEach(p=>{const r=(p.risk_level||'').toUpperCase();if(r==='LOW')cleared++;else if(r==='HIGH')flagged++;else review++;});
   document.getElementById('stat-total').textContent=products.length;

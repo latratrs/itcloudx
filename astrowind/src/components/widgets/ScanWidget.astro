@@ -325,7 +325,7 @@ const {
 </style>
 
 <script is:inline>
-(function () {
+document.addEventListener('astro:page-load', function () {
   // ── DOM refs ─────────────────────────────────────────────────────────
   var root       = document.querySelector('.scan-widget');
   var ENDPOINT   = root ? root.dataset.endpoint : '';
@@ -649,5 +649,5 @@ const {
     };
   }
 
-})();
+});
 </script>

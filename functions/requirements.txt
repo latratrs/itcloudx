@@ -1,9 +1,9 @@
-# Google Cloud Functions framework
-functions-framework==3.*
-
-# Google Cloud Vision API client
+firebase-functions>=0.1.0
+firebase-admin>=6.0.0
 google-cloud-vision==3.*
-
-# PyMuPDF — converts PDF pages to images for Vision API analysis.
-# Optional but strongly recommended for multi-page PDF support.
-PyMuPDF==1.24.*
+google-cloud-firestore>=2.0.0
+google-genai>=1.0.0
+functions-framework==3.*
+pymupdf==1.24.*
+requests>=2.28.0
+reportlab>=4.0.0
