@@ -1,15 +1,17 @@
 ---
+export const prerender = true;
 import Layout from '~/layouts/PageLayout.astro';
-import { getPermalink } from '~/utils/permalinks';
 
 const metadata = {
   title: 'About TradeShield AI – Los Angeles AI-Powered Trade Compliance',
-  description: 'Los Angeles-based startup building AI tools for HS code classification, real-time sanctions screening, tariff intelligence, and global trade compliance. Prevent costly customs fines with intelligent automation.',
+  description: 'Los Angeles-based startup founded by Yuriy Altshul building AI tools for HS code classification, real-time sanctions screening, tariff intelligence, and global trade compliance.',
   ignoreTitleTemplate: true,
+  robots: { index: true },
 };
 ---
 
 <Layout metadata={metadata}>
+
   <!-- Hero Section -->
   <section class="relative bg-[#0b1e3d] overflow-hidden">
     <div class="absolute inset-0 opacity-10" style="background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 40px 40px;"></div>
@@ -19,76 +21,137 @@ const metadata = {
         <span class="w-2 h-2 rounded-full bg-[#f0a820] animate-pulse"></span>
         Los Angeles AI Startup
       </span>
-      <h1 class="text-5xl md:text-7xl font-black text-white leading-tight tracking-tight">
-        About TradeShield AI
-      </h1>
+      <h1 class="text-5xl md:text-7xl font-black text-white leading-tight tracking-tight">About TradeShield AI</h1>
       <p class="mt-8 text-xl md:text-2xl text-white/80 max-w-4xl mx-auto">
         Bridging the gap between complex global trade regulations and modern AI efficiency.
       </p>
     </div>
   </section>
 
-  <!-- Main Content Section -->
+  <!-- Who We Are -->
   <section class="py-20 bg-white dark:bg-gray-950 transition-colors">
-    <div class="max-w-4xl mx-auto px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-6">Who We Are</h2>
+      </div>
       <div class="prose prose-lg md:prose-xl dark:prose-invert max-w-none mx-auto text-gray-700 dark:text-gray-300">
-        
-        <!-- What We Solve -->
-        <h2 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-6 text-center">What We Solve</h2>
-        <p>
-          TradeShield AI is a Los Angeles-based startup founded by Yuriy Altshul to bridge the gap between complex global trade regulations and modern AI efficiency. Born from a vision to make high-level compliance accessible to every growing business, we are currently in our early stages of funding and rapid development.
+        <p class="lead text-xl text-center mb-10">
+          TradeShield AI is a Los Angeles-based startup founded by <strong>Yuriy Altshul</strong> to bridge the gap between complex global trade regulations and modern AI efficiency.
         </p>
         <p>
-          We live at the intersection of international law, supply chain logic, and AI-native engineering. Our platform serves importers, e-commerce sellers, and manufacturers who can't afford to wait days for a compliance check. We deliver broker-level precision in seconds—preventing multimillion-dollar fines and shipment seizures before they happen.
+          Born from a vision to make high-level compliance accessible to every growing business, we are currently in our early stages of funding and rapid development. We live at the intersection of international law, supply chain logic, and AI-native engineering.
         </p>
-
-        <!-- Tech Stack -->
-        <div class="mt-16 pt-12 border-t border-gray-200 dark:border-gray-700">
-          <h2 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-6 text-center">Our Tech Stack: Powered by Google</h2>
-          <p>
-            As an early-stage startup, we’ve built our foundation on the most robust infrastructure available. TradeShield AI is engineered entirely within the Google Cloud Ecosystem. By leveraging Firebase, Firebase Functions, Gemini AI and Vertex AI, we provide our users with:
-          </p>
-          <ul class="list-disc pl-8 space-y-4">
-            <li>
-              <strong>Real-Time Scalability:</strong> High-speed scanning that grows with your transaction volume.
-            </li>
-            <li>
-              <strong>Data Integrity:</strong> Secure, cloud-native processing of sensitive trade documents.
-            </li>
-            <li>
-              <strong>Instant Intelligence:</strong> Serverless architecture that pushes live updates from global regulatory bodies (CBP, OFAC, WCO, EU, UN) directly to your dashboard.
-            </li>
-          </ul>
-        </div>
-
-        <!-- Small Team, Global Reach -->
-        <div class="mt-16 pt-12 border-t border-gray-200 dark:border-gray-700">
-          <h2 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-6 text-center">Small Team, Global Reach</h2>
-          <p>
-            We are a founder-led, lean operation. This means you get direct access to Yuriy Altshul and the core engineering team. We believe that compliance should be proactive, affordable, and invisible—allowing you to focus on growth while our AI handles the shield.
-          </p>
-        </div>
-
+        <p>
+          Our platform serves importers, e-commerce sellers, and manufacturers who can't afford to wait days for a compliance check. We deliver broker-level precision in seconds — preventing multimillion-dollar fines and shipment seizures before they happen.
+        </p>
+        <p class="font-semibold text-center mt-10 text-lg">
+          Small team. Direct founder access. Big impact on your bottom line.
+        </p>
       </div>
     </div>
   </section>
 
-  <!-- CTA Section -->
-  <section class="py-20 bg-[#0b1e3d] text-white text-center">
-    <div class="max-w-4xl mx-auto px-6">
-      <h2 class="text-3xl md:text-5xl font-black mb-6 leading-tight">
-        Ready to Stop Compliance Risks?
-      </h2>
-      <p class="text-xl md:text-2xl opacity-90 mb-10">
-        Run a free scan today — 60 seconds could save you $1,000,000 in fines and delays.
-      </p>
-      <a href="/audit" class="inline-flex items-center gap-4 bg-[#0a7c6e] hover:bg-[#0d9485] text-white font-black text-xl px-12 py-6 rounded-2xl shadow-2xl transition-all hover:scale-105">
-        Start Free Compliance Scan →
-        <span class="text-2xl">⚡</span>
-      </a>
-      <p class="mt-8 text-white/60 text-sm">
-        No credit card • First 5 scans free • Powered by Deccod
-      </p>
+  <!-- What We Solve - Cards -->
+  <section class="py-20 bg-gradient-to-b from-white to-[#f7f5f0] dark:from-gray-950 dark:to-gray-900 transition-colors">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-6">What We Solve</h2>
+        <p class="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+          Trade compliance is broken — slow, expensive, and error-prone. We fix it with AI that thinks like an expert customs broker, but works 24/7 at a fraction of the cost.
+        </p>
+      </div>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300">
+          <div class="w-16 h-16 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center text-4xl mb-6 mx-auto">🔍</div>
+          <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">HS Code Classification</h3>
+          <p class="text-gray-700 dark:text-gray-300 text-center">Accurate, up-to-date codes against live CBP & WCO databases — preventing misclassification fines up to $1M+ per violation.</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300">
+          <div class="w-16 h-16 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center text-4xl mb-6 mx-auto">🛡️</div>
+          <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">Sanctions Screening</h3>
+          <p class="text-gray-700 dark:text-gray-300 text-center">Real-time OFAC SDN, UN Consolidated, and EU sanctions list checks on every shipment party and product — automatically.</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300">
+          <div class="w-16 h-16 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center text-4xl mb-6 mx-auto">💰</div>
+          <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">Tariff Intelligence</h3>
+          <p class="text-gray-700 dark:text-gray-300 text-center">Live duty rates including Section 301, Section 232, AD/CVD, and UFLPA stacked tariffs — calculated per product, per origin.</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300">
+          <div class="w-16 h-16 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center text-4xl mb-6 mx-auto">📋</div>
+          <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">PDF Compliance Reports</h3>
+          <p class="text-gray-700 dark:text-gray-300 text-center">Audit-ready PDF reports with HS codes, risk scores, sanctions status, and plain-English action plans — shareable with your customs broker.</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300">
+          <div class="w-16 h-16 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center text-4xl mb-6 mx-auto">⚡</div>
+          <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">60-Second Audits</h3>
+          <p class="text-gray-700 dark:text-gray-300 text-center">Upload any document — PDF, Excel, CSV, or photo. Get full compliance analysis in under 60 seconds. No waiting. No appointments.</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300">
+          <div class="w-16 h-16 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center text-4xl mb-6 mx-auto">🌍</div>
+          <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">Multi-Regulation Coverage</h3>
+          <p class="text-gray-700 dark:text-gray-300 text-center">CBP + OFAC + EU + UN + UFLPA — all layered, all live, all in one report. One scan covers every major compliance framework simultaneously.</p>
+        </div>
+      </div>
     </div>
   </section>
+
+  <!-- Tech Stack -->
+  <section class="py-20 bg-[#0b1e3d] text-white">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl md:text-5xl font-black mb-6">Our Tech Stack: Powered by Google</h2>
+        <p class="text-xl text-white/70 max-w-3xl mx-auto">
+          As an early-stage startup, we've built our foundation on the most robust infrastructure available. TradeShield AI is engineered entirely within the Google Cloud Ecosystem.
+        </p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="bg-white/10 border border-white/20 rounded-2xl p-8 text-center hover:bg-white/15 transition-all">
+          <div class="text-4xl mb-4">📈</div>
+          <h3 class="text-xl font-bold mb-3 text-[#0fb39d]">Real-Time Scalability</h3>
+          <p class="text-white/70">High-speed scanning powered by Firebase Functions that grows with your transaction volume — zero downtime.</p>
+        </div>
+        <div class="bg-white/10 border border-white/20 rounded-2xl p-8 text-center hover:bg-white/15 transition-all">
+          <div class="text-4xl mb-4">🔐</div>
+          <h3 class="text-xl font-bold mb-3 text-[#0fb39d]">Data Integrity</h3>
+          <p class="text-white/70">Secure, cloud-native processing of sensitive trade documents on Google Cloud. Files deleted after each scan.</p>
+        </div>
+        <div class="bg-white/10 border border-white/20 rounded-2xl p-8 text-center hover:bg-white/15 transition-all">
+          <div class="text-4xl mb-4">🤖</div>
+          <h3 class="text-xl font-bold mb-3 text-[#0fb39d]">Instant Intelligence</h3>
+          <p class="text-white/70">Gemini AI + Vertex AI push live updates from CBP, OFAC, WCO, EU, and UN directly into every scan result.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Founder Section -->
+  <section class="py-20 bg-[#f7f5f0] dark:bg-gray-900 transition-colors">
+    <div class="max-w-4xl mx-auto px-6 text-center">
+      <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-6">Small Team, Global Reach</h2>
+      <p class="text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
+        We are a founder-led, lean operation. This means you get direct access to <strong>Yuriy Altshul</strong> and the core engineering team. We believe that compliance should be proactive, affordable, and invisible — allowing you to focus on growth while our AI handles the shield.
+      </p>
+      <div class="inline-flex items-center gap-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-8 py-5 shadow-lg">
+        <div class="text-4xl">🛡️</div>
+        <div class="text-left">
+          <div class="font-black text-gray-900 dark:text-white text-lg">Yuriy Altshul</div>
+          <div class="text-gray-500 dark:text-gray-400 text-sm">Founder · TradeShield AI · Los Angeles</div>
+          <a href="mailto:yaltshul@itcloudx.com" class="text-teal-600 dark:text-teal-400 text-sm hover:underline">yaltshul@itcloudx.com</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-20 bg-gradient-to-br from-[#0b1e3d] to-[#0a7c6e] text-white text-center">
+    <div class="max-w-4xl mx-auto px-6">
+      <h2 class="text-3xl md:text-5xl font-black mb-6 leading-tight">Ready to Stop Compliance Risks?</h2>
+      <p class="text-xl opacity-90 mb-10">Run a free scan today — 60 seconds could save you $1,000,000 in fines and delays.</p>
+      <a href="/audit" class="inline-flex items-center gap-4 bg-white text-[#0b1e3d] hover:bg-gray-100 font-black text-xl px-12 py-6 rounded-2xl shadow-2xl transition-all hover:scale-105">
+        Start Free Compliance Scan → <span class="text-2xl">⚡</span>
+      </a>
+      <p class="mt-8 text-white/60 text-sm">No credit card • First 5 scans free • Powered by Deccod</p>
+    </div>
+  </section>
+
 </Layout>
