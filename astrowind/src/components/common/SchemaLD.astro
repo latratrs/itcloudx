@@ -53,9 +53,104 @@ const software = {
     "reviewCount": "127"
   }
 };
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "TradeShield AI",
+  "url": site,
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": `${site}/blog?q={search_term_string}`,
+    "query-input": "required name=search_term_string"
+  }
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is an HS code and why does it matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "An HS (Harmonized System) code is a 6-10 digit number that classifies every product traded internationally. Using the wrong HS code can result in fines up to $1M+, delayed shipments, and customs seizures. TradeShield AI classifies your products automatically in 60 seconds."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does TradeShield AI check OFAC sanctions?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "TradeShield AI screens your shipment against the OFAC SDN list, UN Consolidated Sanctions list, and EU sanctions database in real-time. Every scan generates a compliance report showing cleared or flagged status for each party and product."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How much does TradeShield AI cost?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "TradeShield AI offers 5 free scans per month with no credit card required. The Pro plan is $299/month for unlimited scans, full OFAC+UN+EU screening, and clean PDF compliance reports. Enterprise plans start at $999/month."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What file types can I upload for compliance scanning?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "TradeShield AI accepts PDF invoices, CSV product lists, Excel spreadsheets (XLSX/XLS), Word documents (DOC/DOCX), and photos of shipping documents (JPG, PNG, TIFF). The AI extracts product data from any format automatically."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How accurate is the HS code classification?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "TradeShield AI uses Google Gemini 2.5 Flash trained on the HTS 2026 schedule. Classification accuracy is comparable to a certified customs broker. Every result includes a confidence score and compliance notes."
+      }
+    }
+  ]
+};
+
+const howtoSchema = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Check Your Shipment for Customs Compliance",
+  "description": "Use TradeShield AI to scan your shipping documents for HS code errors, sanctions violations, and tariff risks in 60 seconds.",
+  "totalTime": "PT1M",
+  "supply": [{ "@type": "HowToSupply", "name": "Shipping invoice, packing list, or product CSV" }],
+  "tool": [{ "@type": "HowToTool", "name": "TradeShield AI (free at itcloudx.com)" }],
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Upload your document",
+      "text": "Go to itcloudx.com and upload your invoice, CSV, Excel file, or photo of shipping documents. No account required for the first 5 scans.",
+      "url": `${site}/audit`
+    },
+    {
+      "@type": "HowToStep",
+      "name": "AI scans for compliance issues",
+      "text": "TradeShield AI classifies every product with HS codes, calculates duty rates, and screens against OFAC, UN, and EU sanctions lists simultaneously.",
+      "url": `${site}/audit`
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Download your compliance report",
+      "text": "Get a full PDF compliance report with HS codes, risk scores, sanctions status, and a plain-English action plan. Ready to file or share with your customs broker.",
+      "url": `${site}/audit`
+    }
+  ]
+};
 const isBlogPost = metadata?.title && Astro.url.pathname.includes('/blog/');
 const isHome = Astro.url.pathname === '/';
 ---
+<!-- WebSite schema with SearchAction on every page -->
+<script is:inline type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
+<!-- FAQ schema on homepage -->
+{isHome && <script is:inline type="application/ld+json" set:html={JSON.stringify(faqSchema)} />}
+<!-- HowTo schema on homepage -->
+{isHome && <script is:inline type="application/ld+json" set:html={JSON.stringify(howtoSchema)} />}
 <!-- Organization schema on every page -->
 <script is:inline type="application/ld+json" set:html={JSON.stringify(org)} />
 
