@@ -14,18 +14,39 @@ const org = {
 };
 const software = {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
+  "@type": ["SoftwareApplication", "Service"],
   "name": "TradeShield AI",
   "applicationCategory": "BusinessApplication",
+  "serviceType": "AI Trade Compliance Scanning",
   "operatingSystem": "Web",
   "url": site,
   "description": "AI customs compliance tool. Upload invoices and get HS codes, duty rates, OFAC sanctions screening, and PDF compliance reports in 60 seconds.",
-  "offers": {
-    "@type": "Offer",
-    "price": "0",
-    "priceCurrency": "USD",
-    "description": "Free plan: 5 scans/month"
+  "disambiguatingDescription": "TradeShield AI is a real-time AI scanning and trade compliance processing service for importers, exporters, and freight forwarders. It is NOT a cloud storage provider, file hosting site, or data warehousing facility.",
+  "provider": {
+    "@type": "Organization",
+    "name": "TradeShield AI",
+    "url": site
   },
+  "audience": {
+    "@type": "BusinessAudience",
+    "audienceType": "Importers, Exporters, Freight Forwarders, Customs Brokers"
+  },
+  "offers": [
+    {
+      "@type": "Offer",
+      "name": "Free Plan",
+      "price": "0",
+      "priceCurrency": "USD",
+      "description": "5 free scans per month"
+    },
+    {
+      "@type": "Offer",
+      "name": "Pro Plan",
+      "price": "299",
+      "priceCurrency": "USD",
+      "description": "Unlimited scans, full OFAC+UN+EU screening, clean PDF reports"
+    }
+  ],
   "aggregateRating": {
     "@type": "AggregateRating",
     "ratingValue": "4.8",
