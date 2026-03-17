@@ -589,7 +589,7 @@ const metadata = {
   if(!firebase.apps.length){
     firebase.initializeApp({
       apiKey:'AIzaSyCII6BiECYWnVDLAa8GmvaXUhJfIlIi10o',
-      authDomain:'itcloudx-com.firebaseapp.com',
+      authDomain:'itcloudx.com',
       projectId:'itcloudx-com',
       storageBucket:'itcloudx-com.firebasestorage.app',
       messagingSenderId:'836345929499',
@@ -646,34 +646,46 @@ const metadata = {
 
   function initAuthUI(){
     restoreCachedUI();
-    firebase.auth().getRedirectResult().then(function(result){
-      if(result&&result.user){updateUI(result.user);}
-    }).catch(function(e){
-      console.error('Redirect result:',e.code,e.message);
-    });
     firebase.auth().onAuthStateChanged(function(user){
-      if(user){updateUI(user);}
+      if(user){
+        window.currentUserEmail=user.email;
+        window.currentUserToken=localStorage.getItem('ts_auth_token');
+        var sb=document.getElementById('google-signin-btn');
+        var su=document.getElementById('signed-in-user');
+        var ss=document.getElementById('scan-form-section');
+        var ud=document.getElementById('user-email-display');
+        if(sb)sb.style.display='none';
+        if(su)su.style.display='flex';
+        if(ss)ss.style.display='block';
+        if(ud)ud.textContent=user.displayName||user.email;
+      }
     });
   }
 
   window.signInWithGoogle=function(){
     var provider=new firebase.auth.GoogleAuthProvider();
     provider.setCustomParameters({prompt:'select_account'});
-    var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if(isMobile){
-      firebase.auth().signInWithRedirect(provider);
-    } else {
-      firebase.auth().signInWithPopup(provider).then(function(result){
-        updateUI(result.user);
-      }).catch(function(e){
-        console.error('Popup error:',e.code);
-        if(e.code==='auth/popup-blocked'||e.code==='auth/popup-closed-by-user'){
-          firebase.auth().signInWithRedirect(provider);
-        } else {
-          alert('Sign-in failed: '+e.message);
-        }
+    firebase.auth().signInWithPopup(provider).then(function(result){
+      var user=result.user;
+      window.currentUserEmail=user.email;
+      user.getIdToken(true).then(function(t){
+        window.currentUserToken=t;
+        localStorage.setItem('ts_auth_token',t);
+        localStorage.setItem('ts_auth_email',user.email);
+        localStorage.setItem('ts_auth_name',user.displayName||user.email);
       });
-    }
+      var sb=document.getElementById('google-signin-btn');
+      var su=document.getElementById('signed-in-user');
+      var ss=document.getElementById('scan-form-section');
+      var ud=document.getElementById('user-email-display');
+      if(sb)sb.style.display='none';
+      if(su)su.style.display='flex';
+      if(ss)ss.style.display='block';
+      if(ud)ud.textContent=user.displayName||user.email;
+    }).catch(function(e){
+      console.error('Auth error:',e.code,e.message);
+      alert('Sign-in failed ('+e.code+'): '+e.message);
+    });
   };
 
   window.signOut=function(){
@@ -780,7 +792,7 @@ function renderResults(data){
   SR.querySelector('#res-score-label').textContent=rec;
   SR.querySelector('#res-icon').textContent=score>=67?'🚨':score>=34?'⚠️':'✅';
   SR.querySelector('#res-summary').textContent=ship.summary||data.summary||'';
-  SR.querySelector('#res-meta').innerHTML='JOB: '+(data.job_id||data.jobId||'—')+' — COMPANY: '+(data.company_name||data.company||'—')+' — '+new Date().toDateString().toUpperCase()+'<br/><span class="text-teal-400 font-bold tracking-widest mt-2 inline-block">🛡️ SCANNED BY SHERLOCK VISION API</span>';
+  SR.querySelector('#res-meta').innerHTML='JOB: '+(data.job_id||data.jobId||'—')+' — COMPANY: '+(data.company_name||data.company||document.getElementById('company')?.value||'—')+' — '+new Date().toDateString().toUpperCase()+'<br/><span class="text-teal-400 font-bold tracking-widest mt-2 inline-block">🛡️ SCANNED BY SHERLOCK VISION API</span>';
   let cleared=0,review=0,flagged=0;
   products.forEach(p=>{const r=(p.risk_level||'').toUpperCase();if(r==='LOW')cleared++;else if(r==='HIGH')flagged++;else review++;});
   SR.querySelector('#stat-total').textContent=products.length;
@@ -955,7 +967,7 @@ window.startScan=startScan;window.clearFile=clearFile;window.switchTab=switchTab
 <div id='g_id_onload'
   data-client_id='836345929499-p8cvadaf9h89phhhrgj1ait1s4qfh7ir.apps.googleusercontent.com'
   data-callback='handleOneTapCredential'
-  data-auto_prompt='true'
+  data-auto_prompt='false'
   data-cancel_on_tap_outside='false'
   data-context='signin'
   data-itp_support='true'>
