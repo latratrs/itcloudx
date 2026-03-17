@@ -2,5 +2,16 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /api
+Disallow: /itcloudx-products
+Disallow: /itcloudx-services
+Disallow: /itcloudx-about-us
+Disallow: /itcloudx-
 
-Sitemap: https://itcloudx.com/sitemap.xml
+Sitemap: https://itcloudx.com/sitemap-index.xml
+
+# Legacy IT pages - removed
+User-agent: Googlebot
+Disallow: /itcloudx-
+Disallow: /desktop-as-a-service
+Disallow: /cyber-security
+Disallow: /hosted-pbx
