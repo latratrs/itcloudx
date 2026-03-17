@@ -4,15 +4,59 @@
     "cleanUrls": true,
     "trailingSlash": false,
     "redirects": [
-      {"source": "/desktop-as-a-service", "destination": "/services", "type": 301},
-      {"source": "/cyber-security", "destination": "/services", "type": 301},
-      {"source": "/hosted-pbx", "destination": "/services", "type": 301},
-      {"source": "/communication-solutions", "destination": "/services", "type": 301},
-      {"source": "/it-services", "destination": "/", "type": 301},
-      {"source": "/managed-services", "destination": "/services", "type": 301}
+      {
+        "source": "/desktop-as-a-service",
+        "destination": "/services",
+        "type": 301
+      },
+      {
+        "source": "/cyber-security",
+        "destination": "/services",
+        "type": 301
+      },
+      {
+        "source": "/hosted-pbx",
+        "destination": "/services",
+        "type": 301
+      },
+      {
+        "source": "/communication-solutions",
+        "destination": "/services",
+        "type": 301
+      },
+      {
+        "source": "/it-services",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/managed-services",
+        "destination": "/services",
+        "type": 301
+      }
     ],
     "rewrites": [
-      {"source": "**", "destination": "/404.html"}
+      {
+        "source": "/__/auth/**",
+        "destination": "/__/auth/handler"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          {"key": "X-Content-Type-Options", "value": "nosniff"},
+          {"key": "X-Frame-Options", "value": "SAMEORIGIN"},
+          {"key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains"},
+          {"key": "X-XSS-Protection", "value": "1; mode=block"},
+          {"key": "Referrer-Policy", "value": "strict-origin-when-cross-origin"},
+          {"key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()"}
+        ]
+      }
     ]
   }
 }

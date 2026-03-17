@@ -55,7 +55,7 @@ const metadata = {
         <p class="text-gray-300 text-lg leading-relaxed mb-6">Upload any shipping document — PDF, CSV, Excel, or photo. Get instant AI analysis: HS codes, duty rates, sanctions screening, and a plain-English action plan.</p>
         <div class="flex flex-wrap gap-3">
           <span class="bg-white/10 border border-white/20 text-white/80 text-sm px-4 py-1.5 rounded-full">🛡️ OFAC · UN · EU Screened</span>
-          <span class="bg-white/10 border border-white/20 text-white/80 text-sm px-4 py-1.5 rounded-full">⚡ Results in ~15 seconds</span>
+          <span class="bg-white/10 border border-white/20 text-white/80 text-sm px-4 py-1.5 rounded-full">⚡ Results in ~60 seconds</span>
           <span class="bg-white/10 border border-white/20 text-white/80 text-sm px-4 py-1.5 rounded-full">🔒 No data stored</span>
         </div>
       </div>
@@ -69,13 +69,28 @@ const metadata = {
 
   <div class="max-w-3xl mx-auto px-6 py-12">
     <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
+      <div id='google-signin-btn' style='text-align:center;padding:32px 24px;display:flex;flex-direction:column;align-items:center;gap:16px'>
+        <div style='font-size:48px'>🔐</div>
+        <h3 style='font-size:18px;font-weight:800;color:#0b1e3d;margin:0'>Sign in to start your free scan</h3>
+        <p style='font-size:13px;color:#64748b;margin:0'>5 free scans per month · No credit card required</p>
+        <button onclick='if(typeof firebase==="undefined"){alert("Auth loading, please try again");return;}window.signInWithGoogle();' style='display:flex;align-items:center;gap:10px;background:white;border:2px solid #e2e8f0;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:700;color:#0b1e3d;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.08)'>
+          <svg width=20 height=20 viewBox='0 0 48 48'><path fill='#EA4335' d='M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z'/><path fill='#4285F4' d='M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z'/><path fill='#FBBC05' d='M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z'/><path fill='#34A853' d='M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z'/></svg>
+          Continue with Google
+        </button>
+      </div>
+      <div id='signed-in-user' style='display:none;align-items:center;justify-content:space-between;padding:10px 16px;background:#f0fdf4;border:1px solid #86efac;border-radius:12px;margin-bottom:16px'>
+        <span style='font-size:13px;color:#166534;font-weight:600'>✅ Signed in as <span id='user-email-display'></span></span>
+        <button onclick='signOut()' style='font-size:11px;color:#64748b;background:none;border:none;cursor:pointer;text-decoration:underline'>Sign out</button>
+      </div>
+      <div id='scan-form-section' style='display:none'>
       <div id="drop-zone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl p-10 text-center cursor-pointer hover:border-teal-500 hover:bg-teal-50/50 dark:hover:bg-teal-950/20 transition-all"
         ondrop="handleDrop(event)" ondragover="handleDragOver(event)" onclick="document.getElementById('file-input').click()">
-        <input type="file" id="file-input" accept=".pdf,.csv,.xlsx,.xls,.jpg,.jpeg,.png,.tiff,.tif" class="hidden" onchange="handleFileSelect(event)">
+        <input type="file" id="file-input" accept=".pdf,.csv,.xlsx,.xls,.doc,.docx,.rtf,.ods,.html,.htm,.jpg,.jpeg,.png,.gif,.tiff,.tif,.webp" class="hidden" onchange="handleFileSelect(event)">
         <div id="drop-idle">
           <div class="text-5xl mb-4">📄</div>
           <div class="text-xl font-bold text-gray-800 dark:text-white mb-2">Drop your document here</div>
           <div class="text-gray-500 text-sm mb-4">PDF · CSV · Excel · JPG · PNG · TIFF</div>
+          <p class='text-xs text-gray-400 mt-3 leading-relaxed'>✅ Best results: PDF invoices, Excel manifests, CSV product lists, JPG/PNG photos<br>⚠️ Limited support: RTF, HTML, GIF — may return lower confidence</p>
           <button type="button" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-6 py-2.5 rounded-xl transition">Choose File</button>
         </div>
         <div id="drop-ready" class="hidden">
@@ -88,18 +103,15 @@ const metadata = {
       </div>
       <div class="mt-6 grid md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Email <span class="text-red-500">*</span></label>
-          <input type="email" id="email" placeholder="you@company.com" class="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none transition">
-        </div>
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Company / Consignee <span class="text-gray-400 font-normal">(optional)</span></label>
-          <input type="text" id="company" placeholder="Acme Imports LLC" class="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none transition">
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Company / Consignee Name <span style='color:#ef4444'>*</span></label>
+          <input type="text" id="company" placeholder="Acme Imports LLC (required)" required class="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none transition">
         </div>
       </div>
       <button id="scan-btn" type="button" onclick="startScan()" disabled class="mt-6 w-full py-4 text-lg font-black rounded-xl bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white shadow-lg transition disabled:opacity-40 disabled:cursor-not-allowed">
         🔍 Run Free Compliance Scan
       </button>
       <p class="mt-4 text-center text-xs text-gray-400 leading-relaxed">By scanning you agree to our <a href="/privacy" class="text-teal-600 hover:underline">Privacy Policy</a> & <a href="/terms" class="text-teal-600 hover:underline">Terms</a>. Files processed in memory, not stored. Not legal advice.</p>
+      </div>
     </div>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
@@ -161,12 +173,12 @@ const metadata = {
   </div>
 
   <div class="bg-[#0d2347] border-t border-white/10 sticky top-0 z-30">
-    <div class="max-w-5xl mx-auto flex overflow-x-auto">
-      <button onclick="switchTab('products')" id="tab-btn-products" class="tab-btn tab-active px-5 py-4 text-sm font-semibold whitespace-nowrap border-b-2 border-transparent transition-all text-white">📦 Products</button>
-      <button onclick="switchTab('problems')" id="tab-btn-problems" class="tab-btn px-5 py-4 text-sm font-semibold whitespace-nowrap text-white/50 border-b-2 border-transparent hover:text-white transition-all">🔴 Problems Found</button>
-      <button onclick="switchTab('sanctions')" id="tab-btn-sanctions" class="tab-btn px-5 py-4 text-sm font-semibold whitespace-nowrap text-white/50 border-b-2 border-transparent hover:text-white transition-all">🛡️ Sanctions</button>
-      <button onclick="switchTab('tariffs')" id="tab-btn-tariffs" class="tab-btn px-5 py-4 text-sm font-semibold whitespace-nowrap text-white/50 border-b-2 border-transparent hover:text-white transition-all">💰 Tariffs</button>
-      <button onclick="switchTab('action')" id="tab-btn-action" class="tab-btn px-5 py-4 text-sm font-semibold whitespace-nowrap text-white/50 border-b-2 border-transparent hover:text-white transition-all">⚡ Fix It</button>
+    <div class="flex flex-wrap gap-1 p-2 w-full justify-center max-w-5xl mx-auto">
+      <button onclick="switchTab('products')" id="tab-btn-products" class="tab-btn tab-active flex-shrink-0 px-5 py-4 text-sm font-semibold border-b-2 border-transparent transition-all text-white">📦 Products</button>
+      <button onclick="switchTab('problems')" id="tab-btn-problems" class="tab-btn flex-shrink-0 px-5 py-4 text-sm font-semibold text-white/50 border-b-2 border-transparent hover:text-white transition-all">🔴 Problems Found</button>
+      <button onclick="switchTab('sanctions')" id="tab-btn-sanctions" class="tab-btn flex-shrink-0 px-5 py-4 text-sm font-semibold text-white/50 border-b-2 border-transparent hover:text-white transition-all">🛡️ Sanctions</button>
+      <button onclick="switchTab('tariffs')" id="tab-btn-tariffs" class="tab-btn flex-shrink-0 px-5 py-4 text-sm font-semibold text-white/50 border-b-2 border-transparent hover:text-white transition-all">💰 Tariffs</button>
+      <button onclick="switchTab('action')" id="tab-btn-action" class="tab-btn flex-shrink-0 px-5 py-4 text-sm font-semibold text-white/50 border-b-2 border-transparent hover:text-white transition-all">⚡ Fix It</button>
     </div>
   </div>
 
@@ -571,6 +583,121 @@ const metadata = {
 
 
 <script is:inline>
+(function(){
+  if(window._fbInit)return;
+  window._fbInit=true;
+  if(!firebase.apps.length){
+    firebase.initializeApp({
+      apiKey:'AIzaSyCII6BiECYWnVDLAa8GmvaXUhJfIlIi10o',
+      authDomain:'itcloudx-com.firebaseapp.com',
+      projectId:'itcloudx-com',
+      storageBucket:'itcloudx-com.firebasestorage.app',
+      messagingSenderId:'836345929499',
+      appId:'1:836345929499:web:620dbc288ee74e45633dbe'
+    });
+  }
+  window.currentUserEmail=null;
+  window.currentUserToken=null;
+
+  function updateUI(user){
+    var sb=document.getElementById('google-signin-btn');
+    var su=document.getElementById('signed-in-user');
+    var ss=document.getElementById('scan-form-section');
+    var ud=document.getElementById('user-email-display');
+    if(user){
+      window.currentUserEmail=user.email;
+      user.getIdToken(true).then(function(t){
+        window.currentUserToken=t;
+        localStorage.setItem('ts_auth_token',t);
+        localStorage.setItem('ts_auth_email',user.email);
+        localStorage.setItem('ts_auth_name',user.displayName||user.email);
+      });
+      if(sb)sb.style.display='none';
+      if(su)su.style.display='flex';
+      if(ss)ss.style.display='block';
+      if(ud)ud.textContent=user.displayName||user.email;
+    } else {
+      if(!localStorage.getItem('ts_auth_email')){
+        window.currentUserEmail=null;
+        window.currentUserToken=null;
+        if(sb)sb.style.display='flex';
+        if(su)su.style.display='none';
+        if(ss)ss.style.display='none';
+      }
+    }
+  }
+  window.updateUI=updateUI;
+
+  function restoreCachedUI(){
+    var cachedEmail=localStorage.getItem('ts_auth_email');
+    if(cachedEmail){
+      var sb=document.getElementById('google-signin-btn');
+      var su=document.getElementById('signed-in-user');
+      var ss=document.getElementById('scan-form-section');
+      var ud=document.getElementById('user-email-display');
+      if(sb)sb.style.display='none';
+      if(su)su.style.display='flex';
+      if(ss)ss.style.display='block';
+      if(ud)ud.textContent=localStorage.getItem('ts_auth_name')||cachedEmail;
+      window.currentUserEmail=cachedEmail;
+      window.currentUserToken=localStorage.getItem('ts_auth_token');
+    }
+  }
+
+  function initAuthUI(){
+    restoreCachedUI();
+    firebase.auth().getRedirectResult().then(function(result){
+      if(result&&result.user){updateUI(result.user);}
+    }).catch(function(e){
+      console.error('Redirect result:',e.code,e.message);
+    });
+    firebase.auth().onAuthStateChanged(function(user){
+      if(user){updateUI(user);}
+    });
+  }
+
+  window.signInWithGoogle=function(){
+    var provider=new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({prompt:'select_account'});
+    var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if(isMobile){
+      firebase.auth().signInWithRedirect(provider);
+    } else {
+      firebase.auth().signInWithPopup(provider).then(function(result){
+        updateUI(result.user);
+      }).catch(function(e){
+        console.error('Popup error:',e.code);
+        if(e.code==='auth/popup-blocked'||e.code==='auth/popup-closed-by-user'){
+          firebase.auth().signInWithRedirect(provider);
+        } else {
+          alert('Sign-in failed: '+e.message);
+        }
+      });
+    }
+  };
+
+  window.signOut=function(){
+    localStorage.removeItem('ts_auth_token');
+    localStorage.removeItem('ts_auth_email');
+    localStorage.removeItem('ts_auth_name');
+    window.currentUserEmail=null;
+    window.currentUserToken=null;
+    firebase.auth().signOut().then(function(){
+      var sb=document.getElementById('google-signin-btn');
+      var su=document.getElementById('signed-in-user');
+      var ss=document.getElementById('scan-form-section');
+      if(sb)sb.style.display='flex';
+      if(su)su.style.display='none';
+      if(ss)ss.style.display='none';
+    });
+  };
+
+  document.addEventListener('DOMContentLoaded',initAuthUI);
+  document.addEventListener('astro:page-load',initAuthUI);
+  document.addEventListener('astro:after-swap',restoreCachedUI);
+})();
+</script>
+<script is:inline>
 const FUNCTION_URL='https://trade-vision-scan-tmv6tfm3wa-uc.a.run.app';
 const MIN_SCAN_MS=12000;
 let selectedFile=null,previewDataURL=null,lastResult=null;
@@ -596,8 +723,9 @@ function clearFile(){
   document.getElementById('scan-btn').disabled=true;
 }
 function startScan(){
-  const email=document.getElementById('email').value.trim();
-  if(!email){alert('Please enter your email address.');return;}
+  const company=document.getElementById('company').value.trim();
+  if(!company){alert('Please enter your company name.');return;}
+  const email = window.currentUserEmail || '';
   if(!selectedFile){alert('Please select a file.');return;}
   lastResult=null;
   document.getElementById('res-score-num').textContent='—';
@@ -614,8 +742,9 @@ function startScan(){
     document.getElementById('scan-progress').style.width=((i+1)/5*85)+'%';
   },i*2400));
   const fd=new FormData();
-  fd.append('file',selectedFile);fd.append('email',email);
-  const co=document.getElementById('company').value.trim();if(co)fd.append('company',co);
+  fd.append('file',selectedFile);
+  fd.append('company',company);
+  fd.append('email', email);
   const fetchPromise=fetch(FUNCTION_URL,{method:'POST',body:fd}).then(r=>{if(r.status===429)throw new Error('429 limit reached');return r.json();}).then(d=>{if(d.error&&d.error.includes('limit'))throw new Error('429 limit reached');return d;});
   const timerPromise=new Promise(resolve=>setTimeout(resolve,12000));
   Promise.all([fetchPromise,timerPromise])
@@ -624,7 +753,7 @@ function startScan(){
       lastResult=data;
       requestAnimationFrame(()=>renderResults(data));
     })
-    .catch(err=>{hide('screen-scan');const em=document.getElementById('error-msg');if(em){const msg=err.message||'';em.innerHTML=msg.includes('429')||msg.includes('limit')?'<strong>Scan limit reached.</strong> You have used all 5 free scans this month. <a href="/pricing" class="underline text-teal-400">Upgrade to Pro</a> for unlimited scans.':msg||'Network error. Please try again.';}show('screen-error');});
+    .catch(err=>{hide('screen-scan');const em=document.getElementById('error-msg');if(em){const msg=err.message||'';em.innerHTML=msg.includes('429')||msg.includes('limit')?'<div style="text-align:center;padding:16px 0"><div style="font-size:48px;margin-bottom:12px">🚫</div><div style="font-size:22px;font-weight:900;color:#ef4444;margin-bottom:8px;letter-spacing:-0.5px">FREE SCAN LIMIT REACHED</div><div style="font-size:15px;color:#64748b;margin-bottom:16px">You have used all 5 free scans this month.</div><div style="font-size:13px;color:#0a7c6e;font-weight:700;margin-bottom:16px">🛡️ SCANNED BY SHERLOCK VISION API</div><a href="/pricing" style="display:inline-block;background:#0a7c6e;color:white;font-weight:800;font-size:16px;padding:14px 32px;border-radius:12px;text-decoration:none">⚡ Upgrade to Pro — $299/mo</a><div style="font-size:12px;color:#94a3b8;margin-top:10px">Unlimited scans · Full OFAC+UN+EU · Clean PDF reports</div></div>':msg||'Network error. Please try again.';}show('screen-error');});
 }
 function riskColor(r){return r==='HIGH'?'#ef4444':r==='MEDIUM'?'#f59e0b':'#22c55e';}
 function riskIcon(r){return r==='HIGH'?'🚨':r==='MEDIUM'?'⚠️':'✅';}
@@ -777,6 +906,68 @@ function downloadPDF(){
 function rescan(){lastResult=null;selectedFile=null;previewDataURL=null;clearFile();hide('screen-result');hide('screen-error');show('screen-upload');window.scrollTo({top:0,behavior:'smooth'});}
 function show(id){document.getElementById(id).classList.remove('hidden');}
 function hide(id){document.getElementById(id).classList.add('hidden');}
-window.startScan=startScan;window.clearFile=clearFile;window.switchTab=switchTab;window.toggleProd=toggleProd;window.rescan=rescan;window.downloadPDF=downloadPDF;window.handleDrop=handleDrop;window.handleDragOver=handleDragOver;window.handleFileSelect=handleFileSelect;
+const demoData={
+  speaker:{title:'Bluetooth Speaker',id:'TS-X9',hs:'8518.21.0000',duty:'4.9% + active surcharges',sanctions:'CLEARED',notes:'Standard consumer electronics. Monitor for future expansions.',risk:'LOW',score:28,color:'#22c55e'},
+  battery:{title:'Lithium Battery Pack',id:'TS-X7',hs:'8507.60.0000',duty:'3.4% + 25% Section 301',sanctions:'CLEARED',notes:'Section 301 tariffs apply. Requires UN38.3 test report for air freight. UFLPA supply chain risk from Xinjiang.',risk:'MEDIUM',score:61,color:'#f59e0b'},
+  drone:{title:'Drone Parts — Dual-Use',id:'TS-X3',hs:'8806.24.0000',duty:'0% + EAR99 review',sanctions:'FLAGGED — EAR99',notes:'Dual-use export control risk. Requires BIS classification review. May need export license for certain destinations.',risk:'HIGH',score:88,color:'#ef4444'},
+  solar:{title:'Solar Panels (UFLPA)',id:'TS-X5',hs:'8541.40.6020',duty:'14.5% + AD/CVD + Section 201',sanctions:'CLEARED',notes:'UFLPA enforcement active. Requires CSPB documentation for Xinjiang polysilicon. AD/CVD deposits required at entry.',risk:'HIGH',score:82,color:'#ef4444'}
+};
+
+function runDemo(key){
+  const d=demoData[key];
+  if(!d)return;
+  const overlay=document.getElementById('demo-overlay');
+  const status=document.getElementById('demo-status');
+  if(!overlay||!status)return;
+  const steps=['Connecting to OFAC...','Scanning HTS Schedule...','Checking EU Sanctions...','Calculating tariffs...','Generating report...'];
+  overlay.classList.remove('hidden');overlay.style.display='flex';
+  let i=0;
+  const interval=setInterval(()=>{
+    status.textContent=steps[i]||steps[steps.length-1];
+    i++;
+    if(i>=steps.length){
+      clearInterval(interval);
+      setTimeout(()=>{
+        overlay.classList.add('hidden');overlay.style.display='none';
+        const sc=d.score>=67?'#ef4444':d.score>=34?'#f59e0b':'#22c55e';
+        const el=id=>document.getElementById(id);
+        if(el('demo-title'))el('demo-title').textContent=d.title;
+        if(el('demo-id'))el('demo-id').textContent='AUDIT ID: '+d.id;
+        if(el('demo-hs'))el('demo-hs').textContent=d.hs;
+        if(el('demo-duty'))el('demo-duty').textContent=d.duty;
+        if(el('demo-sanctions')){el('demo-sanctions').textContent=d.sanctions;el('demo-sanctions').style.color=d.sanctions.includes('FLAGGED')?'#ef4444':'#22c55e';}
+        if(el('demo-notes'))el('demo-notes').textContent=d.notes;
+        if(el('demo-risk')){el('demo-risk').textContent=d.risk;el('demo-risk').style.color=sc;}
+        if(el('demo-score')){el('demo-score').textContent=d.score;el('demo-score').style.color=sc;}
+        if(el('demo-bar'))el('demo-bar').style.width=d.score+'%';
+        if(el('demo-bar'))el('demo-bar').style.background=sc;
+        document.querySelectorAll('.demo-btn').forEach(b=>b.classList.remove('border-2','border-[#0a7c6e]','bg-[#0a7c6e]/5'));
+        const active=document.querySelector('[onclick="runDemo(\''+key+'\')"]');
+        if(active)active.classList.add('border-2','border-[#0a7c6e]','bg-[#0a7c6e]/5');
+      },300);
+    }
+  },400);
+}
+
+window.startScan=startScan;window.clearFile=clearFile;window.switchTab=switchTab;window.toggleProd=toggleProd;window.rescan=rescan;window.downloadPDF=downloadPDF;window.handleDrop=handleDrop;window.handleDragOver=handleDragOver;window.handleFileSelect=handleFileSelect;window.runDemo=runDemo;
+</script>
+
+<div id='g_id_onload'
+  data-client_id='836345929499-p8cvadaf9h89phhhrgj1ait1s4qfh7ir.apps.googleusercontent.com'
+  data-callback='handleOneTapCredential'
+  data-auto_prompt='true'
+  data-cancel_on_tap_outside='false'
+  data-context='signin'
+  data-itp_support='true'>
+</div>
+
+<script is:inline>
+function handleOneTapCredential(response) {
+  if (!response.credential) return;
+  const credential = firebase.auth.GoogleAuthProvider.credential(null, response.credential);
+  firebase.auth().signInWithCredential(credential).catch(function(e) {
+    console.error('One Tap error:', e);
+  });
+}
 </script>
 </Layout>

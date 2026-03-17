@@ -18,7 +18,7 @@ db = firestore.client()
 
 # ── Constants ────────────────────────────────────────────────────
 MAX_FILE_BYTES = 25 * 1024 * 1024
-ALLOWED_ORIGINS = ["*"]  # Allow all origins — tighten after testing
+ALLOWED_ORIGINS = ['https://itcloudx.com', 'https://www.itcloudx.com', 'https://itcloudx-com.web.app', 'https://itcloudx-com.firebaseapp.com', 'http://localhost:4321']
 
 # Free tier: 5 scans/month, Pro: unlimited
 FREE_SCAN_LIMIT = 5
@@ -247,13 +247,79 @@ def extract_content(file_bytes: bytes, mime_type: str, filename: str):
     if ext in ('xlsx', 'xls') or 'spreadsheet' in mime_type or 'excel' in mime_type:
         try:
             import pandas as pd
-            df = pd.read_excel(io.BytesIO(file_bytes), sheet_name=None)
+            df = pd.read_excel(io.BytesIO(file_bytes), sheet_name=None, nrows=5000)
             parts = []
             for sheet_name, sheet_df in df.items():
                 parts.append(f"SHEET: {sheet_name}\n{sheet_df.to_string(index=False)}")
             return {"type": "text", "data": "\n\n".join(parts)}, "EXCEL"
         except Exception as e:
             return {"type": "text", "data": f"Excel error: {e}"}, "EXCEL_ERROR"
+
+    # Word documents
+    if ext in ('doc', 'docx') or 'word' in mime_type or 'officedocument.wordprocessingml' in mime_type:
+        try:
+            import docx2txt
+            text = docx2txt.process(io.BytesIO(file_bytes))
+            return {'type': 'text', 'data': f'WORD DOCUMENT:\n{text}'}, 'DOCX'
+        except Exception as e:
+            return {'type': 'text', 'data': file_bytes.decode('utf-8', errors='replace')}, 'DOC_RAW'
+
+    # RTF
+    if ext == 'rtf' or 'rtf' in mime_type:
+        try:
+            text = file_bytes.decode('utf-8', errors='replace')
+            import re
+            text = re.sub(r'\\[a-z]+\d*\s?', ' ', text)
+            text = re.sub(r'[{}]', '', text)
+            return {'type': 'text', 'data': f'RTF DOCUMENT:\n{text[:5000]}'}, 'RTF'
+        except Exception as e:
+            return {'type': 'text', 'data': ''}, 'RTF_ERROR'
+
+    # HTML/HTM
+    if ext in ('html', 'htm') or 'html' in mime_type:
+        try:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(file_bytes.decode('utf-8', errors='replace'), 'html.parser')
+            for script in soup(['script', 'style', 'meta', 'link']):
+                script.decompose()
+            text = soup.get_text(separator=' ', strip=True)[:5000]
+            return {'type': 'text', 'data': f'HTML DOCUMENT:\n{text}'}, 'HTML'
+        except Exception as e:
+            return {'type': 'text', 'data': ''}, 'HTML_ERROR'
+
+    # ODS (OpenDocument Spreadsheet)
+    if ext == 'ods' or 'opendocument.spreadsheet' in mime_type:
+        try:
+            import pandas as pd
+            df = pd.read_excel(io.BytesIO(file_bytes), engine='odf', sheet_name=None)
+            parts = []
+            for sheet_name, sheet_df in df.items():
+                parts.append(f'SHEET: {sheet_name}\n{sheet_df.to_string(index=False)}')
+            return {'type': 'text', 'data': '\n\n'.join(parts)}, 'ODS'
+        except Exception as e:
+            return {'type': 'text', 'data': f'ODS error: {e}'}, 'ODS_ERROR'
+
+    # GIF - treat as image
+    if ext == 'gif' or mime_type == 'image/gif':
+        try:
+            from PIL import Image
+            img = Image.open(io.BytesIO(file_bytes)).convert('RGB')
+            buf = io.BytesIO()
+            img.save(buf, format='PNG')
+            return {'type': 'blob', 'data': buf.getvalue(), 'mime': 'image/png'}, 'GIF'
+        except Exception:
+            return {'type': 'blob', 'data': file_bytes, 'mime': 'image/gif'}, 'GIF_RAW'
+
+    # WebP
+    if ext == 'webp' or mime_type == 'image/webp':
+        try:
+            from PIL import Image
+            img = Image.open(io.BytesIO(file_bytes))
+            buf = io.BytesIO()
+            img.save(buf, format='PNG')
+            return {'type': 'blob', 'data': buf.getvalue(), 'mime': 'image/png'}, 'WEBP'
+        except Exception:
+            return {'type': 'blob', 'data': file_bytes, 'mime': 'image/webp'}, 'WEBP_RAW'
 
     # Images — upscale for better OCR
     if mime_type in ('image/jpeg', 'image/png', 'image/tiff') or ext in ('jpg', 'jpeg', 'png', 'tiff', 'tif'):
@@ -622,10 +688,45 @@ def scan(req: https_fn.Request) -> https_fn.Response:
         if len(file_bytes) > MAX_FILE_BYTES:
             return _json_response({"error": "File too large. Max 25MB."}, 400)
 
+        MAGIC_BYTES = {
+            b'%PDF': 'pdf',
+            b'PK\x03\x04': 'zip_based',
+            b'\xd0\xcf\x11\xe0': 'ole',
+            b'\xff\xd8\xff': 'jpg',
+            b'\x89PNG': 'png',
+            b'GIF8': 'gif',
+            b'II*\x00': 'tiff',
+            b'MM\x00*': 'tiff',
+            b'RIFF': 'webp',
+            b'<html': 'html',
+            b'<!DOC': 'html',
+        }
         ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
-        allowed_exts = {'pdf', 'csv', 'xlsx', 'xls', 'jpg', 'jpeg', 'png', 'tiff', 'tif'}
+        detected = None
+        for magic, ftype in MAGIC_BYTES.items():
+            if file_bytes[:len(magic)] == magic:
+                detected = ftype
+                break
+        if detected == 'zip_based' and ext not in ('xlsx', 'xls', 'docx', 'ods', 'zip'):
+            return _json_response({'error': 'Invalid file format detected.'}, 400)
+        if detected == 'ole' and ext not in ('doc', 'xls'):
+            return _json_response({'error': 'Invalid file format detected.'}, 400)
+
+        allowed_exts = {'pdf', 'csv', 'xlsx', 'xls', 'doc', 'docx', 'rtf', 'ods', 'html', 'htm', 'jpg', 'jpeg', 'png', 'gif', 'tiff', 'tif', 'webp'}
         if ext not in allowed_exts:
             return _json_response({"error": f"File type .{ext} not supported. Use PDF, CSV, Excel, or image."}, 400)
+
+        import time
+        # Rate limit: max 10 requests per minute per IP
+        ip_key = f'ratelimit:{ip}:{int(time.time() // 60)}'
+        try:
+            ip_ref = db.collection('rate_limits').document(ip_key)
+            ip_doc = ip_ref.get()
+            if ip_doc.exists and ip_doc.to_dict().get('count', 0) >= 10:
+                return _json_response({'error': 'Too many requests. Please wait a minute before trying again.'}, 429)
+            ip_ref.set({'count': (ip_doc.to_dict().get('count', 0) + 1) if ip_doc.exists else 1, 'expires': time.time() + 60}, merge=True)
+        except Exception as e:
+            print(f'Rate limit check error (non-fatal): {e}')
 
         # ── Extract content ───────────────────────────────────────
         content, extraction_method = extract_content(file_bytes, mime_type, filename)
