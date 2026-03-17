@@ -35,5 +35,5 @@ export const footerData = {
     { text: 'Privacy', href: getPermalink('/privacy') },
   ],
   socialLinks: [],
-  footNote: `© 2026 TradeShield AI · Powered by <a  class="underline">Deccod</a>`,
+  footNote: `© 2026 TradeShield AI · Powered by <a class="underline">Deccod</a> · Built on Google Cloud & Firebase · Contact: yaltshul@itcloudx.com`,
 };
