@@ -33,9 +33,9 @@ export const footerData = {
     {
       title: 'Trade Intelligence',
       links: [
-        { text: 'Tariff News', href: `${getBlogPermalink()}category/tariffs/` },
-        { text: 'Sanctions Updates', href: `${getBlogPermalink()}category/sanctions/` },
-        { text: 'HS Code Guides', href: `${getBlogPermalink()}category/hs-codes/` },
+        { text: 'Tariff News', href: `${getBlogPermalink()}category/trade-compliance-news/` },
+        { text: 'Sanctions Updates', href: `${getBlogPermalink()}category/trade-compliance-news/` },
+        { text: 'HS Code Guides', href: `${getBlogPermalink()}category/trade-compliance-news/` },
         { text: 'All Articles', href: getBlogPermalink() },
       ],
     },
