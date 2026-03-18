@@ -1,11 +1,31 @@
 ---
 export const prerender = true;
 import Layout from '~/layouts/PageLayout.astro';
+import { findLatestPosts } from '~/utils/blog';
+import { getPermalink } from '~/utils/permalinks';
 
 const metadata = {
   title: 'TradeShield AI — Stop Customs Fines Before They Start',
   description: 'AI scans invoices for correct HS codes, current tariffs, OFAC/EU/UN sanctions. Free 5 scans, full compliance report in 60 seconds. Avoid $1M+ fines.',
   ignoreTitleTemplate: true,
+};
+
+const latestPosts = await findLatestPosts({ count: 3 }).catch(() => []);
+
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'TradeShield AI',
+  url: 'https://itcloudx.com',
+  logo: 'https://itcloudx.com/favicon.svg',
+  description: 'AI-powered US customs & trade compliance SaaS. Stop customs fines before they start.',
+  foundingLocation: { '@type': 'Place', name: 'Los Angeles, CA' },
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer support',
+    email: 'compliance@itcloudx.com',
+  },
+  sameAs: [],
 };
 ---
 
@@ -581,6 +601,58 @@ const metadata = {
     </div>
   </section>
 
+  <!-- Featured Articles — internal linking to latest blog posts -->
+  {latestPosts.length > 0 && (
+    <section class="py-20 bg-white border-t border-gray-100">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6">
+        <div class="text-center mb-12">
+          <span class="text-xs font-bold tracking-widest uppercase text-[#0a7c6e] block mb-3">Trade Intelligence</span>
+          <h2 class="text-3xl md:text-4xl font-black text-gray-900 mb-4">Latest Compliance Insights</h2>
+          <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+            Stay ahead of tariff changes, sanctions updates, and HS code best practices from our experts.
+          </p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6 mb-10">
+          {latestPosts.map(post => (
+            <a
+              href={getPermalink(post.permalink, 'post')}
+              class="group flex flex-col rounded-xl overflow-hidden border border-gray-200 hover:border-[#0a7c6e] bg-white hover:shadow-lg transition-all duration-200"
+            >
+              <div class="p-6 flex flex-col flex-1">
+                {post.category && (
+                  <span class="inline-block text-xs font-bold text-[#0a7c6e] bg-[#0a7c6e]/10 rounded-full px-3 py-1 mb-4 w-fit">
+                    {post.category.title}
+                  </span>
+                )}
+                <h3 class="text-base font-bold text-gray-900 mb-2 group-hover:text-[#0a7c6e] transition-colors line-clamp-2">
+                  {post.title}
+                </h3>
+                {post.excerpt && (
+                  <p class="text-sm text-gray-600 flex-1 line-clamp-2 mb-4">{post.excerpt}</p>
+                )}
+                <div class="flex items-center justify-between pt-4 border-t border-gray-100 text-xs text-gray-400">
+                  {post.publishDate && (
+                    <time>{new Date(post.publishDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</time>
+                  )}
+                  <span class="text-[#0a7c6e] font-bold group-hover:translate-x-1 transition-transform">Read →</span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+        <div class="text-center">
+          <a
+            href="/blog"
+            class="inline-flex items-center gap-2 bg-[#0b1e3d] text-white font-bold text-sm px-8 py-3 rounded-lg hover:bg-[#0a7c6e] transition-colors"
+          >
+            View All Trade Intelligence Articles →
+          </a>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <script type="application/ld+json" set:html={JSON.stringify(organizationSchema)} />
 
 <script is:inline>
 (function(){

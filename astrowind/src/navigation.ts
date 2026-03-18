@@ -27,12 +27,23 @@ export const footerData = {
         { text: 'About', href: getPermalink('/about') },
         { text: 'Blog', href: getBlogPermalink() },
         { text: 'Contact', href: getPermalink('/contact') },
+        { text: 'Services', href: getPermalink('/services') },
+      ],
+    },
+    {
+      title: 'Trade Intelligence',
+      links: [
+        { text: 'Tariff News', href: `${getBlogPermalink()}category/tariffs/` },
+        { text: 'Sanctions Updates', href: `${getBlogPermalink()}category/sanctions/` },
+        { text: 'HS Code Guides', href: `${getBlogPermalink()}category/hs-codes/` },
+        { text: 'All Articles', href: getBlogPermalink() },
       ],
     },
   ],
   secondaryLinks: [
     { text: 'Terms', href: getPermalink('/terms') },
     { text: 'Privacy', href: getPermalink('/privacy') },
+    { text: 'Contact', href: getPermalink('/contact') },
   ],
   socialLinks: [],
   footNote: `© 2026 TradeShield AI · Powered by <a class="underline">Deccod</a> · Built on Google Cloud & Firebase · Contact: yaltshul@itcloudx.com`,

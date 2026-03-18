@@ -12,6 +12,7 @@ import { getStaticPathsBlogPost, blogPostRobots } from '~/utils/blog';
 import { findImage } from '~/utils/images';
 import type { MetaData } from '~/types';
 import RelatedPosts from '~/components/blog/RelatedPosts.astro';
+import BlogBreadcrumb from '~/components/blog/BlogBreadcrumb.astro';
 
 export const prerender = true;
 
@@ -43,9 +44,40 @@ const metadata = merge(
   },
   { ...(post?.metadata ? { ...post.metadata, canonical: post.metadata?.canonical || url } : {}) }
 ) as MetaData;
+
+const SITE_URL = 'https://itcloudx.com';
+const postUrl = typeof url === 'string' ? url : url.toString();
+const postPath = postUrl.replace(SITE_URL, '') || '/blog';
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'NewsArticle',
+  headline: post.title,
+  description: post.excerpt || post.title,
+  datePublished: post.publishDate ? new Date(post.publishDate).toISOString() : undefined,
+  dateModified: post.updateDate ? new Date(post.updateDate).toISOString() : undefined,
+  url: postUrl,
+  author: {
+    '@type': 'Organization',
+    name: 'TradeShield AI',
+    url: SITE_URL,
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: 'TradeShield AI',
+    url: SITE_URL,
+    logo: {
+      '@type': 'ImageObject',
+      url: `${SITE_URL}/favicon.svg`,
+    },
+  },
+  ...(image ? { image: typeof image === 'string' ? image : (image as ImageMetadata).src } : {}),
+};
 ---
 
 <Layout metadata={metadata}>
+  <script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
+  <BlogBreadcrumb title={post.title} category={post.category} url={postPath} />
   <SinglePost post={{ ...post, image: image }} url={url}>
     {post.Content ? <post.Content /> : <Fragment set:html={post.content || ''} />}
   </SinglePost>

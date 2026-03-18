@@ -1,0 +1,82 @@
+---
+// BlogBreadcrumb.astro
+// Breadcrumb navigation with BreadcrumbList JSON-LD schema markup
+import { getPermalink } from '~/utils/permalinks';
+
+export interface Props {
+  title: string;
+  category?: { title: string; slug: string } | null;
+  url?: string;
+}
+
+const { title, category, url = '' } = Astro.props;
+
+const SITE_URL = 'https://itcloudx.com';
+const categoryHref = category ? getPermalink(category.slug, 'category') : null;
+
+const breadcrumbItems = [
+  { name: 'Home', href: '/', item: SITE_URL },
+  { name: 'Blog', href: '/blog', item: `${SITE_URL}/blog` },
+  ...(category && categoryHref
+    ? [{ name: category.title, href: categoryHref, item: `${SITE_URL}${categoryHref}` }]
+    : []),
+  { name: title, href: url, item: `${SITE_URL}${url}` },
+];
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: breadcrumbItems.map((crumb, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: crumb.name,
+    item: crumb.item,
+  })),
+};
+---
+
+<nav
+  aria-label="Breadcrumb"
+  class="bg-white border-b border-gray-100"
+  style="padding: 12px 0"
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <ol
+      class="flex flex-wrap items-center gap-1 text-sm text-gray-500"
+      itemscope
+      itemtype="https://schema.org/BreadcrumbList"
+    >
+      {breadcrumbItems.map((crumb, index) => (
+        <li
+          class="flex items-center gap-1"
+          itemprop="itemListElement"
+          itemscope
+          itemtype="https://schema.org/ListItem"
+        >
+          {index < breadcrumbItems.length - 1 ? (
+            <>
+              <a
+                href={crumb.href}
+                itemprop="item"
+                class="hover:text-[#0a7c6e] transition-colors"
+              >
+                <span itemprop="name">{crumb.name}</span>
+              </a>
+              <meta itemprop="position" content={String(index + 1)} />
+              <span class="text-gray-300" aria-hidden="true">›</span>
+            </>
+          ) : (
+            <>
+              <span itemprop="name" class="text-gray-800 font-medium line-clamp-1 max-w-xs" aria-current="page">
+                {crumb.name}
+              </span>
+              <meta itemprop="position" content={String(index + 1)} />
+            </>
+          )}
+        </li>
+      ))}
+    </ol>
+  </div>
+</nav>
+
+<script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />

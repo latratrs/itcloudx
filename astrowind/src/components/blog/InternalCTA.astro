@@ -1,0 +1,76 @@
+---
+// InternalCTA.astro
+// Reusable internal CTA component with consistent styling
+
+export interface Props {
+  variant?: 'audit' | 'pricing' | 'blog' | 'contact';
+  heading?: string;
+  body?: string;
+  linkText?: string;
+  linkHref?: string;
+}
+
+const variants = {
+  audit: {
+    heading: 'Run Your Free AI Trade Audit',
+    body: 'Scan invoices, packing lists, or product documents for HS code errors, OFAC sanctions exposure, and hidden tariff risks — in 60 seconds.',
+    linkText: '✦ Start Free Compliance Audit',
+    linkHref: '/audit',
+    accent: '#0a7c6e',
+    bg: '#f0fdf9',
+    border: '#0a7c6e30',
+  },
+  pricing: {
+    heading: 'Explore Our Compliance Plans',
+    body: 'From 5 free scans to unlimited API access. Find the right plan to protect your supply chain and avoid costly import penalties.',
+    linkText: 'View Pricing Plans →',
+    linkHref: '/pricing',
+    accent: '#0b1e3d',
+    bg: '#f7f5f0',
+    border: '#0b1e3d30',
+  },
+  blog: {
+    heading: 'Trade Compliance Intelligence',
+    body: 'Stay ahead of tariff changes, sanctions updates, and HS code best practices. Read our latest expert analysis.',
+    linkText: 'Browse All Articles →',
+    linkHref: '/blog',
+    accent: '#0a7c6e',
+    bg: '#f0fdf9',
+    border: '#0a7c6e30',
+  },
+  contact: {
+    heading: 'Talk to Our Compliance Team',
+    body: 'Have questions about customs fines, sanctions screening, or enterprise pricing? Our Los Angeles-based team responds fast.',
+    linkText: 'Contact Us →',
+    linkHref: '/contact',
+    accent: '#0b1e3d',
+    bg: '#f7f5f0',
+    border: '#0b1e3d30',
+  },
+};
+
+const { variant = 'audit', heading, body, linkText, linkHref } = Astro.props;
+const v = variants[variant];
+
+const finalHeading = heading ?? v.heading;
+const finalBody = body ?? v.body;
+const finalLinkText = linkText ?? v.linkText;
+const finalLinkHref = linkHref ?? v.linkHref;
+---
+
+<div
+  style={`background:${v.bg};border:1px solid ${v.border};border-left:4px solid ${v.accent};border-radius:12px;padding:24px 28px;margin:32px 0`}
+>
+  <h3 style={`font-size:17px;font-weight:800;color:#0f172a;margin-bottom:8px`}>
+    {finalHeading}
+  </h3>
+  <p style="font-size:14px;color:#475569;line-height:1.65;margin-bottom:16px">
+    {finalBody}
+  </p>
+  <a
+    href={finalLinkHref}
+    style={`display:inline-block;background:${v.accent};color:#fff;font-weight:700;font-size:14px;padding:10px 22px;border-radius:8px;text-decoration:none;letter-spacing:.01em`}
+  >
+    {finalLinkText}
+  </a>
+</div>
