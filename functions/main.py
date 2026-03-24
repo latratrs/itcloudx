@@ -1,5 +1,5 @@
 # ═══════════════════════════════════════════════════════════════
-# TRADESHIELD AI — SCANNER BACKEND v3
+# TRADESHIELD AI — SCANNER BACKEND v3.02
 # Firebase Cloud Function · Python 3.13
 # Features: OFAC/UN/EU sanctions, scan counter, PDF reports, tier enforcement
 # ═══════════════════════════════════════════════════════════════
@@ -35,7 +35,7 @@ You are TradeShield AI, an elite US customs compliance auditor with deep experti
 - OFAC SDN sanctions screening
 - EU and UN consolidated sanctions lists
 - UFLPA forced labor supply chain checks
-- Stacked tariff analysis: Section 301 (China trade war), Section 232 (steel/aluminum), Section 122 (emergency imports), AD/CVD
+- Stacked tariff analysis: Section 301 (China trade war), Section 232 (steel/aluminum), Section 122, AD/CVD
 
 Analyze the provided trade document. Extract EVERY product/item and audit each one.
 
@@ -46,14 +46,12 @@ Return ONLY valid JSON — no markdown, no explanation, no preamble:
       "name": "Product Name",
       "hs_code": "XXXX.XX.XXXX",
       "duty_rate": "X.X%",
-      "section_301_rate": "25% (List 3 - electronics from China)" or "N/A",
-      "section_232_rate": "25% (steel derivative)" or "N/A",
+      "section_301_rate": "25% (List 3 - from China)" or "N/A",
+      "section_232_rate": "25% (steel article)" or "N/A",
       "section_122_rate": "N/A",
-      "tariff_layers": "e.g. 4.9% MFN base + 25% Section 301 = 29.9% total",
       "total_duty_rate": "29.9%",
+      "tariff_layers": "4.9% MFN base + 25% Section 301 = 29.9% total",
       "estimated_duty_usd": "estimated duty in USD if value is known, else null",
-      "vague_description": false,
-      "vague_suggestion": "null or clarification question if description is too vague to classify",
       "sanctions_status": "CLEARED",
       "sanctions_detail": "No matches found on OFAC SDN, EU, or UN lists",
       "risk_level": "LOW",
@@ -76,12 +74,11 @@ Return ONLY valid JSON — no markdown, no explanation, no preamble:
 }
 
 Rules:
-- ALWAYS use full 10-digit HTS codes. Never use 6-digit or 8-digit codes.
-- Section 301: applies to goods from China. List 1/2 = 25%, List 3 = 25%, List 4A = 7.5%. Check product category carefully.
-- Section 232: steel products = 25%, aluminum products = 10%. Applies regardless of country of origin.
-- Section 122: emergency tariff, rarely triggered — mark N/A unless clearly applicable.
-- If product description is vague (e.g. "goods", "items", "parts", "stuff", "merchandise"), set vague_description=true and provide a specific clarification question in vague_suggestion.
-- Risk scoring: LOW (0-33) standard import; MEDIUM (34-66) needs documentation review; HIGH (67-100) sanctions hit, dual-use, UFLPA, or major tariff issue.
+- ALWAYS use full 10-digit HTS codes. Never use 6-digit or 8-digit.
+- section_301_rate: applies to goods from China. List 1/2/3 = 25%, List 4A = 7.5%. Set N/A if not from China.
+- section_232_rate: steel products = 25%, aluminum = 10%, regardless of origin. Set N/A if not applicable.
+- total_duty_rate: sum of duty_rate + section_301_rate + section_232_rate.
+- Risk: LOW (0-33) standard; MEDIUM (34-66) needs review; HIGH (67-100) sanctions/UFLPA/major tariff issue.
 """
 
 
@@ -222,25 +219,15 @@ def increment_scan_count(identifier: str) -> int:
 
 
 def get_user_tier(email: str) -> str:
-    """Check if email has a paid subscription. Returns: free / pro / enterprise
-    Checks both 'subscriptions' collection (PayPal flow) and
-    'users' collection (manually set in Firebase console for test accounts).
-    """
+    """Check if email has a paid subscription. Returns: free / pro / enterprise"""
     if not email:
         return "free"
     try:
-        # Primary: subscriptions collection (PayPal/Stripe billing)
         docs = db.collection("subscriptions").where("email", "==", email).where("status", "==", "active").limit(1).get()
         for doc in docs:
             return doc.to_dict().get("tier", "free")
-        # Fallback: users collection (manually set via Firebase console for testing)
-        users = db.collection("users").where("email", "==", email).limit(1).get()
-        for doc in users:
-            tier = doc.to_dict().get("tier", "free")
-            if tier in ("pro", "enterprise"):
-                return tier
-    except Exception as e:
-        print(f"Tier check error (non-fatal): {e}")
+    except Exception:
+        pass
     return "free"
 
 
@@ -365,19 +352,6 @@ def extract_content(file_bytes: bytes, mime_type: str, filename: str):
 # PDF REPORT GENERATOR
 # ══════════════════════════════════════════════════════════════════
 
-def _draw_diagonal_watermark(canvas, doc):
-    """Draws a diagonal FREE PREVIEW watermark across every page."""
-    from reportlab.lib import colors as rl_colors
-    canvas.saveState()
-    canvas.setFont("Helvetica-Bold", 72)
-    canvas.setFillColor(rl_colors.Color(0.85, 0.85, 0.85, alpha=0.25))
-    canvas.translate(306, 396)   # centre of letter page (612x792 / 2)
-    canvas.rotate(45)
-    canvas.drawCentredString(0, 0, "FREE PREVIEW")
-    canvas.drawCentredString(0, -90, "UPGRADE TO PRO")
-    canvas.restoreState()
-
-
 def generate_pdf_report(audit_data: dict, job_id: str, filename: str, tier: str) -> bytes:
     """Generate compliance PDF report using ReportLab."""
     try:
@@ -389,16 +363,9 @@ def generate_pdf_report(audit_data: dict, job_id: str, filename: str, tier: str)
         from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
         buf = io.BytesIO()
-        if tier == "free":
-            doc = SimpleDocTemplate(buf, pagesize=letter,
-                                    rightMargin=0.75*inch, leftMargin=0.75*inch,
-                                    topMargin=0.75*inch, bottomMargin=0.75*inch,
-                                    onFirstPage=_draw_diagonal_watermark,
-                                    onLaterPages=_draw_diagonal_watermark)
-        else:
-            doc = SimpleDocTemplate(buf, pagesize=letter,
-                                    rightMargin=0.75*inch, leftMargin=0.75*inch,
-                                    topMargin=0.75*inch, bottomMargin=0.75*inch)
+        doc = SimpleDocTemplate(buf, pagesize=letter,
+                                rightMargin=0.75*inch, leftMargin=0.75*inch,
+                                topMargin=0.75*inch, bottomMargin=0.75*inch)
 
         styles = getSampleStyleSheet()
         navy   = colors.HexColor('#0b1e3d')
@@ -552,19 +519,24 @@ def generate_pdf_report(audit_data: dict, job_id: str, filename: str, tier: str)
                     [f"#{i}  {p.get('name', 'Unknown Product')}", ""],
                     ["HS Code (10-digit)", p.get("hs_code", "N/A")],
                     ["MFN Base Duty", p.get("duty_rate", "N/A")],
-                    ["Section 301 Surcharge", p.get("section_301_rate", "N/A")],
-                    ["Section 232 Surcharge", p.get("section_232_rate", "N/A")],
-                    ["Total Duty Rate", p.get("total_duty_rate", p.get("duty_rate", "N/A"))],
-                    ["Tariff Breakdown", p.get("tariff_layers", "N/A")],
-                    ["Sanctions Status", p.get("sanctions_status", "N/A")],
-                    ["Risk Level", f"{risk}  (Score: {p.get('risk_score', 0)}/100)"],
-                    ["Recommended Action", p.get("recommended_action", "REVIEW")],
-                    ["Compliance Notes", p.get("compliance_notes", "")],
                 ]
 
-                # Vague description warning
-                if p.get("vague_description") and p.get("vague_suggestion"):
-                    prod_data.append(["⚠ Clarification Needed", p.get("vague_suggestion", "")])
+                if tier == "pro":
+                    prod_data += [
+                        ["Section 301 Surcharge", p.get("section_301_rate", "N/A")],
+                        ["Section 232 Surcharge", p.get("section_232_rate", "N/A")],
+                        ["Total Duty Rate",        p.get("total_duty_rate", p.get("duty_rate", "N/A"))],
+                        ["Tariff Breakdown",       p.get("tariff_layers", "N/A")],
+                    ]
+                else:
+                    prod_data.append(["Tariff Breakdown", "🔒 Upgrade to Pro — Section 301/232 surcharges hidden"])
+
+                prod_data += [
+                    ["Sanctions Status",   p.get("sanctions_status", "N/A")],
+                    ["Risk Level",         f"{risk}  (Score: {p.get('risk_score', 0)}/100)"],
+                    ["Recommended Action", p.get("recommended_action", "REVIEW")],
+                    ["Compliance Notes",   p.get("compliance_notes", "")],
+                ]
 
                 if p.get("required_documents"):
                     docs_str = ", ".join(p["required_documents"]) if isinstance(p["required_documents"], list) else str(p["required_documents"])
@@ -609,7 +581,39 @@ def generate_pdf_report(audit_data: dict, job_id: str, filename: str, tier: str)
         story.append(Paragraph(footer_text, ParagraphStyle('Footer', fontSize=8, textColor=gray, alignment=TA_CENTER)))
 
         doc.build(story)
-        return buf.getvalue()
+        pdf_bytes = buf.getvalue()
+
+        # Free tier: merge watermark ON TOP using pypdf (draws over colored backgrounds)
+        if tier == "free":
+            from pypdf import PdfReader, PdfWriter
+            from reportlab.pdfgen import canvas as rl_canvas
+            from reportlab.lib.pagesizes import letter as rl_letter
+
+            wm_buf = io.BytesIO()
+            wm = rl_canvas.Canvas(wm_buf, pagesize=rl_letter)
+            wm.saveState()
+            wm.setFont("Helvetica-Bold", 72)
+            wm.setFillColorRGB(0.5, 0.5, 0.5, alpha=0.55)
+            wm.translate(306, 396)
+            wm.rotate(45)
+            wm.drawCentredString(0, 40, "FREE PREVIEW")
+            wm.setFont("Helvetica-Bold", 34)
+            wm.drawCentredString(0, -50, "UPGRADE TO PRO")
+            wm.restoreState()
+            wm.save()
+            wm_buf.seek(0)
+
+            original = PdfReader(io.BytesIO(pdf_bytes))
+            watermark_page = PdfReader(wm_buf).pages[0]
+            writer = PdfWriter()
+            for page in original.pages:
+                page.merge_page(watermark_page)
+                writer.add_page(page)
+            out = io.BytesIO()
+            writer.write(out)
+            return out.getvalue()
+
+        return pdf_bytes
 
     except Exception as e:
         import traceback
@@ -940,3 +944,4 @@ def refresh_sanctions(req: https_fn.Request) -> https_fn.Response:
             results[list_name] = f"Error: {str(e)}"
 
     return https_fn.Response(json.dumps(results), status=200, mimetype="application/json")
+
