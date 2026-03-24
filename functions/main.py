@@ -31,11 +31,11 @@ EU_LIST_URL     = "https://webgate.ec.europa.eu/fsd/fsf/public/files/xmlFullSanc
 # ── Gemini System Prompt ─────────────────────────────────────────
 SYSTEM_INSTRUCTION = """
 You are TradeShield AI, an elite US customs compliance auditor with deep expertise in:
-- HTS/HS code classification (CBP HTSUS 2026 schedule)
+- HTS/HS code classification (CBP HTSUS 2026 schedule) — always return FULL 10-digit HTS codes (format: XXXX.XX.XXXX)
 - OFAC SDN sanctions screening
 - EU and UN consolidated sanctions lists
 - UFLPA forced labor supply chain checks
-- Stacked tariff analysis (Section 301, 232, 122, AD/CVD)
+- Stacked tariff analysis: Section 301 (China trade war), Section 232 (steel/aluminum), Section 122 (emergency imports), AD/CVD
 
 Analyze the provided trade document. Extract EVERY product/item and audit each one.
 
@@ -46,8 +46,14 @@ Return ONLY valid JSON — no markdown, no explanation, no preamble:
       "name": "Product Name",
       "hs_code": "XXXX.XX.XXXX",
       "duty_rate": "X.X%",
-      "tariff_layers": "e.g. 4.9% base + 25% Section 301",
+      "section_301_rate": "25% (List 3 - electronics from China)" or "N/A",
+      "section_232_rate": "25% (steel derivative)" or "N/A",
+      "section_122_rate": "N/A",
+      "tariff_layers": "e.g. 4.9% MFN base + 25% Section 301 = 29.9% total",
+      "total_duty_rate": "29.9%",
       "estimated_duty_usd": "estimated duty in USD if value is known, else null",
+      "vague_description": false,
+      "vague_suggestion": "null or clarification question if description is too vague to classify",
       "sanctions_status": "CLEARED",
       "sanctions_detail": "No matches found on OFAC SDN, EU, or UN lists",
       "risk_level": "LOW",
@@ -69,10 +75,13 @@ Return ONLY valid JSON — no markdown, no explanation, no preamble:
   }
 }
 
-Risk scoring:
-- LOW (0-33): Standard import, no flags
-- MEDIUM (34-66): Needs documentation review
-- HIGH (67-100): Sanctions hit, dual-use, UFLPA, or major tariff issue
+Rules:
+- ALWAYS use full 10-digit HTS codes. Never use 6-digit or 8-digit codes.
+- Section 301: applies to goods from China. List 1/2 = 25%, List 3 = 25%, List 4A = 7.5%. Check product category carefully.
+- Section 232: steel products = 25%, aluminum products = 10%. Applies regardless of country of origin.
+- Section 122: emergency tariff, rarely triggered — mark N/A unless clearly applicable.
+- If product description is vague (e.g. "goods", "items", "parts", "stuff", "merchandise"), set vague_description=true and provide a specific clarification question in vague_suggestion.
+- Risk scoring: LOW (0-33) standard import; MEDIUM (34-66) needs documentation review; HIGH (67-100) sanctions hit, dual-use, UFLPA, or major tariff issue.
 """
 
 
@@ -213,15 +222,25 @@ def increment_scan_count(identifier: str) -> int:
 
 
 def get_user_tier(email: str) -> str:
-    """Check if email has a paid subscription. Returns: free / pro / enterprise"""
+    """Check if email has a paid subscription. Returns: free / pro / enterprise
+    Checks both 'subscriptions' collection (PayPal flow) and
+    'users' collection (manually set in Firebase console for test accounts).
+    """
     if not email:
         return "free"
     try:
+        # Primary: subscriptions collection (PayPal/Stripe billing)
         docs = db.collection("subscriptions").where("email", "==", email).where("status", "==", "active").limit(1).get()
         for doc in docs:
             return doc.to_dict().get("tier", "free")
-    except Exception:
-        pass
+        # Fallback: users collection (manually set via Firebase console for testing)
+        users = db.collection("users").where("email", "==", email).limit(1).get()
+        for doc in users:
+            tier = doc.to_dict().get("tier", "free")
+            if tier in ("pro", "enterprise"):
+                return tier
+    except Exception as e:
+        print(f"Tier check error (non-fatal): {e}")
     return "free"
 
 
@@ -346,6 +365,19 @@ def extract_content(file_bytes: bytes, mime_type: str, filename: str):
 # PDF REPORT GENERATOR
 # ══════════════════════════════════════════════════════════════════
 
+def _draw_diagonal_watermark(canvas, doc):
+    """Draws a diagonal FREE PREVIEW watermark across every page."""
+    from reportlab.lib import colors as rl_colors
+    canvas.saveState()
+    canvas.setFont("Helvetica-Bold", 72)
+    canvas.setFillColor(rl_colors.Color(0.85, 0.85, 0.85, alpha=0.25))
+    canvas.translate(306, 396)   # centre of letter page (612x792 / 2)
+    canvas.rotate(45)
+    canvas.drawCentredString(0, 0, "FREE PREVIEW")
+    canvas.drawCentredString(0, -90, "UPGRADE TO PRO")
+    canvas.restoreState()
+
+
 def generate_pdf_report(audit_data: dict, job_id: str, filename: str, tier: str) -> bytes:
     """Generate compliance PDF report using ReportLab."""
     try:
@@ -357,9 +389,16 @@ def generate_pdf_report(audit_data: dict, job_id: str, filename: str, tier: str)
         from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
         buf = io.BytesIO()
-        doc = SimpleDocTemplate(buf, pagesize=letter,
-                                rightMargin=0.75*inch, leftMargin=0.75*inch,
-                                topMargin=0.75*inch, bottomMargin=0.75*inch)
+        if tier == "free":
+            doc = SimpleDocTemplate(buf, pagesize=letter,
+                                    rightMargin=0.75*inch, leftMargin=0.75*inch,
+                                    topMargin=0.75*inch, bottomMargin=0.75*inch,
+                                    onFirstPage=_draw_diagonal_watermark,
+                                    onLaterPages=_draw_diagonal_watermark)
+        else:
+            doc = SimpleDocTemplate(buf, pagesize=letter,
+                                    rightMargin=0.75*inch, leftMargin=0.75*inch,
+                                    topMargin=0.75*inch, bottomMargin=0.75*inch)
 
         styles = getSampleStyleSheet()
         navy   = colors.HexColor('#0b1e3d')
@@ -511,14 +550,21 @@ def generate_pdf_report(audit_data: dict, job_id: str, filename: str, tier: str)
 
                 prod_data = [
                     [f"#{i}  {p.get('name', 'Unknown Product')}", ""],
-                    ["HS Code", p.get("hs_code", "N/A")],
-                    ["Duty Rate", p.get("duty_rate", "N/A")],
-                    ["Tariff Layers", p.get("tariff_layers", "N/A")],
+                    ["HS Code (10-digit)", p.get("hs_code", "N/A")],
+                    ["MFN Base Duty", p.get("duty_rate", "N/A")],
+                    ["Section 301 Surcharge", p.get("section_301_rate", "N/A")],
+                    ["Section 232 Surcharge", p.get("section_232_rate", "N/A")],
+                    ["Total Duty Rate", p.get("total_duty_rate", p.get("duty_rate", "N/A"))],
+                    ["Tariff Breakdown", p.get("tariff_layers", "N/A")],
                     ["Sanctions Status", p.get("sanctions_status", "N/A")],
                     ["Risk Level", f"{risk}  (Score: {p.get('risk_score', 0)}/100)"],
                     ["Recommended Action", p.get("recommended_action", "REVIEW")],
                     ["Compliance Notes", p.get("compliance_notes", "")],
                 ]
+
+                # Vague description warning
+                if p.get("vague_description") and p.get("vague_suggestion"):
+                    prod_data.append(["⚠ Clarification Needed", p.get("vague_suggestion", "")])
 
                 if p.get("required_documents"):
                     docs_str = ", ".join(p["required_documents"]) if isinstance(p["required_documents"], list) else str(p["required_documents"])
