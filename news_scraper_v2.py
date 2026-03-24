@@ -73,9 +73,30 @@ Rules: mention TradeShield AI at least twice naturally. Do not invent fine amoun
 
     response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
     raw = response.text.strip()
+    # Strip markdown fences
     raw = re.sub(r'^```json\s*', '', raw)
+    raw = re.sub(r'^```\s*', '', raw)
     raw = re.sub(r'\s*```$', '', raw)
-    return json.loads(raw)
+    raw = raw.strip()
+    # Try direct parse first
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        pass
+    # Try extracting JSON object with regex
+    match = re.search(r'\{.*\}', raw, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group())
+        except json.JSONDecodeError:
+            pass
+    # Last resort: ask Gemini to fix its own JSON
+    fix_prompt = f"Fix this invalid JSON and return ONLY valid JSON, nothing else:\n{raw[:3000]}"
+    fix_response = client.models.generate_content(model="gemini-2.5-flash", contents=fix_prompt)
+    fix_raw = fix_response.text.strip()
+    fix_raw = re.sub(r'^```json\s*', '', fix_raw)
+    fix_raw = re.sub(r'\s*```$', '', fix_raw)
+    return json.loads(fix_raw.strip())
 
 def write_post(post):
     today = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -88,7 +109,7 @@ def write_post(post):
 title: "{post['seo_title']}"
 excerpt: "{post['excerpt']}"
 publishDate: {today}
-image: /assets/images/default.png
+image: ~/assets/images/TradeShield-AI.jpg
 category: Trade Compliance News
 tags: {tags_str}
 author: TradeShield AI
