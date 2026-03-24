@@ -1,6 +1,9 @@
 ---
-const latestTitle = 'Trade Compliance 2026: Navigating New Risks & Rules';
-const latestLink = '/blog/trade-compliance-2026-new-risks-rules';
+import { findLatestPosts } from '~/utils/blog';
+const posts = await findLatestPosts({ count: 1 }).catch(() => []);
+const latest = posts[0];
+const latestTitle = latest?.title ?? 'Trade Compliance 2026: Navigating New Risks & Rules';
+const latestLink = latest ? '/' + (latest.permalink ?? 'blog') : '/blog/trade-compliance-2026-new-risks-rules';
 ---
 <div class="relative bg-[#0b1e3d] dark:bg-slate-800 text-white text-sm overflow-hidden whitespace-nowrap text-ellipsis px-3 py-2">
   <span class="bg-[#b8361e] font-semibold px-2 py-0.5 text-xs mr-2 uppercase inline-block rounded">Latest News</span>
