@@ -572,6 +572,86 @@ def _json_response(data: dict, status: int) -> https_fn.Response:
 
 
 # ══════════════════════════════════════════════════════════════════
+# PAYPAL WEBHOOK (MVP)
+# - Secured via X-Webhook-Secret header checked against Secret Manager
+# - Upserts Firestore subscription records by PayPal subscription id
+# ══════════════════════════════════════════════════════════════════
+
+@https_fn.on_request(
+    secrets=["PAYPAL_WEBHOOK_SECRET"],
+    cors=options.CorsOptions(cors_origins=["https://www.paypal.com", "https://api.paypal.com"], cors_methods=["POST", "OPTIONS"]),
+    region="us-central1",
+)
+def paypal_webhook(req: https_fn.Request) -> https_fn.Response:
+    # PayPal webhooks are server-to-server; CORS is irrelevant, but OPTIONS can still show up.
+    if req.method == "OPTIONS":
+        return https_fn.Response("", status=204)
+    if req.method != "POST":
+        return https_fn.Response("Method not allowed", status=405)
+
+    # Simple shared-secret auth (fast MVP).
+    expected = os.environ.get("PAYPAL_WEBHOOK_SECRET", "")
+    provided = req.headers.get("X-Webhook-Secret", "")
+    if not expected or provided != expected:
+        return _json_response({"error": "unauthorized"}, 401)
+
+    try:
+        payload = req.get_json(silent=True) or {}
+    except Exception:
+        payload = {}
+
+    event_type = (payload.get("event_type") or "").strip()
+    resource = payload.get("resource") or {}
+
+    # Subscription fields vary slightly by event. These are the common ones:
+    sub_id = (resource.get("id") or resource.get("subscription_id") or "").strip()
+    plan_id = (resource.get("plan_id") or "").strip()
+    status = (resource.get("status") or "").strip().lower()
+
+    subscriber = resource.get("subscriber") or {}
+    email = (subscriber.get("email_address") or "").strip().lower()
+
+    tier = PAYPAL_PLAN_TO_TIER.get(plan_id, "free")
+
+    # Normalize status
+    # PayPal typical statuses: ACTIVE, CANCELLED, SUSPENDED, EXPIRED, APPROVAL_PENDING
+    if status in ("active",):
+        norm_status = "active"
+    elif status in ("cancelled", "canceled", "expired", "suspended"):
+        norm_status = "inactive"
+    else:
+        norm_status = status or "unknown"
+
+    if not sub_id:
+        # Still store event for debugging, but cannot key subscription correctly.
+        doc_id = f"paypal_event:{uuid.uuid4().hex}"
+    else:
+        doc_id = f"paypal:{sub_id}"
+
+    try:
+        db.collection("subscriptions").document(doc_id).set(
+            {
+                "provider": "paypal",
+                "paypal_subscription_id": sub_id or None,
+                "plan_id": plan_id or None,
+                "tier": tier,
+                "status": norm_status,
+                "email": email or None,
+                "event_type": event_type or None,
+                "raw": payload,
+                "updatedAt": SERVER_TIMESTAMP,
+            },
+            merge=True,
+        )
+    except Exception as e:
+        print(f"PayPal webhook Firestore write error: {e}")
+        return _json_response({"error": "firestore_write_failed"}, 500)
+
+    return _json_response({"ok": True}, 200)
+
+
+
+# ══════════════════════════════════════════════════════════════════
 # MAIN CLOUD FUNCTION: /scan
 # ══════════════════════════════════════════════════════════════════
 
