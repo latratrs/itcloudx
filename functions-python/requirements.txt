@@ -16,3 +16,5 @@ openpyxl>=3.1.0
 xlrd>=2.0.1
 pypdf>=4.0.0
 feedparser>=6.0.0
+
+charset-normalizer>=3.3.0
