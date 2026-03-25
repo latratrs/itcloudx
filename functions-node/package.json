@@ -4,7 +4,7 @@
   "description": "TradeShield AI Firebase Cloud Functions",
   "main": "newsFetcher.js",
   "engines": {
-    "node": "22"
+    "node": ">=20"
   },
   "dependencies": {
     "firebase-admin": "^13.7.0",
