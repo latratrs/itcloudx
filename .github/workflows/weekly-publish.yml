@@ -46,14 +46,6 @@ jobs:
       - name: Build Astro site
         run: cd astrowind && npm run build
 
-      - name: Deploy to Firebase
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ITCLOUDX_COM }}
-          projectId: itcloudx-com
-          channelId: live
-
       - name: Commit new articles to repo
         run: |
           git config user.name "TradeShield AI Bot"
@@ -63,6 +55,13 @@ jobs:
             echo "Nothing to commit."
           else
             git commit -m "content: weekly 3-article publish $(date +%Y-%m-%d)"
-            git pull --rebase origin main
             git push origin main
           fi
+
+      - name: Deploy to Firebase
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ITCLOUDX_COM }}
+          projectId: itcloudx-com
+          channelId: live
