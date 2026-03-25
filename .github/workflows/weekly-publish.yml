@@ -2,7 +2,7 @@ name: Weekly Blog Publish
 
 on:
   schedule:
-    - cron: '0 15 * * 0'  # Every Sunday 8am PT (15:00 UTC)
+    - cron: '0 15 * * 0'  # Every Sunday 8am PT
   workflow_dispatch:
 
 permissions:
@@ -54,9 +54,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "Nothing to commit."
           else
-            git commit -m "content: weekly 3-article publish $(date +%Y-%m-%d)"
-            git fetch origin main
-            git rebase origin/main
+            git commit -m "content: weekly publish $(date +%Y-%m-%d)"
             git push origin main
           fi
 
@@ -67,3 +65,4 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ITCLOUDX_COM }}
           projectId: itcloudx-com
           channelId: live
+          disableComment: true

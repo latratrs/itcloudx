@@ -33,7 +33,7 @@ TOPIC_CLUSTERS = [
         ],
         "angle": "OFAC/EU/UN sanctions enforcement, new designations, counterparty screening. Target: freight forwarders, compliance officers.",
         "tags": ["Sanctions", "OFAC", "Export Controls", "Trade Compliance", "Customs"],
-        "image_prompt": "Professional editorial photography, global trade compliance operations center, analysts at workstations with world maps showing trade routes, dark navy blue and teal color palette, dramatic lighting, no text, no signs, no writing, ultra realistic",
+        "image_prompt": "Cinematic aerial view of busy US customs border crossing checkpoint, long line of cargo trucks waiting for inspection, border patrol vehicles, official government facility, golden hour lighting, no text, no signs, photorealistic wide angle shot",
     },
     {
         "name": "Tariffs & HS Codes",
@@ -44,7 +44,7 @@ TOPIC_CLUSTERS = [
         ],
         "angle": "Tariff changes, HS code classification risks, Section 301/232 surcharges. Target: Amazon FBA sellers, importers, customs brokers.",
         "tags": ["Tariffs", "HS Code", "Section 301", "Import Compliance", "Customs Duties"],
-        "image_prompt": "Professional photojournalism, busy international shipping port at golden hour, rows of colorful cargo containers, cargo ship in background, customs officers reviewing documents on tablets, no text, no signs, ultra realistic, cinematic",
+        "image_prompt": "Professional photojournalism, customs officer in uniform carefully inspecting commercial cargo inside a warehouse, packages on conveyor belt, scanning equipment, official inspection facility, bright clean lighting, no text, no signs, ultra realistic",
     },
     {
         "name": "Global Trade Enforcement",
@@ -55,7 +55,7 @@ TOPIC_CLUSTERS = [
         ],
         "angle": "CBP enforcement, UFLPA supply chain risks, shipment detentions, AI compliance tools. Target: logistics, manufacturers.",
         "tags": ["CBP Enforcement", "UFLPA", "Supply Chain", "Trade Compliance", "Import Audit"],
-        "image_prompt": "Professional photojournalism, US customs border protection inspection at major port of entry, cargo inspection area, professional officers, serious atmosphere, no text, no signs, no writing, ultra realistic, wide angle",
+        "image_prompt": "Bird eye view of major international logistics hub, dozens of semi trucks and cargo vehicles on highway interchange near distribution center, complex road network, dusk lighting, no text, no signs, cinematic drone photography, ultra realistic",
     },
 ]
 
@@ -145,7 +145,7 @@ IMPORTANT: Write every section completely. Do not summarize or skip. Minimum 140
 
     best_body = ""
     for attempt in range(3):
-        model_name = "gemini-1.5-pro-latest"
+        model_name = "gemini-2.5-flash"
         response = client.models.generate_content(
             model=model_name,
             contents=prompt if attempt == 0 else prompt + f"\n\nNote: Previous attempt was {len(best_body.split())} words. Write all sections completely to reach 1400+ words.",
@@ -180,7 +180,7 @@ Return ONLY valid JSON, no markdown fences:
 }}"""
 
     response = client.models.generate_content(
-        model="gemini-1.5-pro-latest",
+        model="gemini-2.5-flash",
         contents=prompt,
         config=types.GenerateContentConfig(max_output_tokens=512, temperature=0.2)
     )
@@ -212,7 +212,7 @@ Return ONLY valid JSON array, no markdown:
   {{"question": "what should importers do immediately", "answer": "3 concrete steps"}}
 ]"""
     response = client.models.generate_content(
-        model="gemini-1.5-pro-latest",
+        model="gemini-2.5-flash",
         contents=prompt,
         config=types.GenerateContentConfig(max_output_tokens=1024, temperature=0.2)
     )
@@ -245,7 +245,7 @@ def generate_image(client, slug, image_prompt):
                     number_of_images=1,
                     aspect_ratio="16:9",
                     safety_filter_level="block_low_and_above",
-                    person_generation="allow",
+                    person_generation="dont_allow",
                 )
             )
             if not response.generated_images:
