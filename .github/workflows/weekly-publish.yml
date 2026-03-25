@@ -2,7 +2,7 @@ name: Weekly Blog Publish
 
 on:
   schedule:
-    - cron: '0 15 * * 0'  # Every Sunday 8am PT
+    - cron: '0 15 * * 0'
   workflow_dispatch:
 
 permissions:
@@ -41,6 +41,7 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python3 news_scraper_v2.py
+        continue-on-error: true
 
       - name: Build Astro site
         run: cd astrowind && npm run build
@@ -54,8 +55,10 @@ jobs:
             echo "Nothing to commit."
           else
             git commit -m "content: weekly publish $(date +%Y-%m-%d)"
-            git push origin main
           fi
+          git fetch origin main
+          git rebase origin/main
+          git push origin main
 
       - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0
