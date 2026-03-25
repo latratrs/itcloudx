@@ -3,13 +3,11 @@
     {
       "source": "functions",
       "codebase": "python-scanner",
-      "runtime": "python311",
       "prefix": "py"
     },
     {
       "source": "functions",
       "codebase": "node-news",
-      "runtime": "nodejs20",
       "prefix": "js"
     }
   ],
