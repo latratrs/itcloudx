@@ -2,7 +2,7 @@
 title: "Customs Audits & Enforcement 2026: Avoid Penalties"
 excerpt: "Customs audits and enforcement are intensifying in 2026. Learn how to navigate evolving regulations, avoid severe penalties, and fortify your trade compliance."
 publishDate: 2026-03-24T11:55:00Z
-image: ~/assets/images/weekly-cover-customs-audits-enforcement-penalties-202-1.jpg
+image: ~/assets/images/weekly-cover-cbp-uflpa-enforcement-supply-c.jpg
 category: Trade Compliance News
 tags: [Customs, HS Code, Tariffs, Import Compliance, Trade Compliance]
 author: TradeShield AI
