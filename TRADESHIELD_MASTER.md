@@ -1,5 +1,5 @@
 # 🛡️ TradeShield AI — Master Project Document
-**Version**: 3.0 | **Updated**: March 25, 2026 | **Author**: Yuriy Altshul
+**Version**: 3.1 | **Updated**: March 25, 2026 | **Author**: Yuriy Altshul
 
 > Upload this document to Claude at the start of each session for instant project context.
 
@@ -19,6 +19,26 @@
 | **Contact** | yaltshul@itcloudx.com |
 
 ---
+
+
+
+---
+
+## 💳 PayPal Subscriptions (MVP wiring)
+
+**Status (2026-03-25)**: Webhook endpoint deployed; backend can upsert Firestore `subscriptions` records by PayPal subscription event.
+
+- **Webhook URL (Firebase Function)**: https://us-central1-itcloudx-com.cloudfunctions.net/paypal_webhook
+- **Auth (MVP)**: requires header `X-Webhook-Secret` matching Secret Manager `PAYPAL_WEBHOOK_SECRET`
+- **Firestore writes**: `subscriptions/paypal:<paypal_subscription_id>`
+- **Plan → Tier mapping (live)**:
+  - Pro monthly: `P-1NU513273T353600TNGWN7CQ` → `pro`
+  - Pro yearly: `P-7GJ23119F6048484ANGWOEWY` → `pro`
+  - Premium monthly: `P-6B6986702B7923417NGWOKBQ` → `premium`
+  - Premium yearly: `P-4XK302596Y708620JNGWOMYA` → `premium`
+
+Next: enforce monthly quotas by Firebase Auth UID + show “WOW” scans-remaining meter in UI.
+
 
 ## 🏗️ Tech Stack
 
