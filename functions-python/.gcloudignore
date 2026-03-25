@@ -1,0 +1,13 @@
+# Do not upload local virtualenvs or caches
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# OS/editor junk
+.DS_Store
+
+# git (not needed for deploy)
+.git/
+.gitignore

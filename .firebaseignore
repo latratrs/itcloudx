@@ -1,0 +1,15 @@
+# ---- Python codebase ----
+functions-python/venv/
+functions-python/__pycache__/
+functions-python/**/*.pyc
+
+# ---- Node codebase ----
+functions-node/node_modules/
+
+# ---- General ----
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.DS_Store
+.git/

@@ -1,14 +1,12 @@
 {
   "functions": [
     {
-      "source": "functions",
-      "codebase": "python-scanner",
-      "prefix": "py"
+      "source": "functions-python",
+      "codebase": "python-scanner"
     },
     {
-      "source": "functions",
-      "codebase": "node-news",
-      "prefix": "js"
+      "source": "functions-node",
+      "codebase": "node-news"
     }
   ],
   "hosting": {
