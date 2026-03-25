@@ -1,69 +1,22 @@
-name: Weekly Blog Publish
+name: Weekly Blog Publish (DISABLED - Use Cloud Scheduler)
+# Publishing is now handled by Google Cloud Scheduler + Cloud Function
+# weekly_publish function at: https://us-central1-itcloudx-com.cloudfunctions.net/weekly_publish
+# Scheduler runs every Sunday 8am PT
+# To trigger manually: curl -X POST https://us-central1-itcloudx-com.cloudfunctions.net/weekly_publish
 
 on:
-  schedule:
-    - cron: '0 15 * * 0'
-  workflow_dispatch:
+  workflow_dispatch:  # Manual only - no automatic schedule
 
 permissions:
   contents: write
 
 jobs:
-  publish:
+  info:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: main
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Python dependencies
-        run: pip install google-genai feedparser python-dotenv
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: astrowind/package-lock.json
-
-      - name: Install Node dependencies
-        run: cd astrowind && npm ci
-
-      - name: Generate 3 articles + Imagen covers
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python3 news_scraper_v2.py
-        continue-on-error: true
-
-      - name: Build Astro site
-        run: cd astrowind && npm run build
-
-      - name: Deploy to Firebase
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ITCLOUDX_COM }}
-          projectId: itcloudx-com
-          channelId: live
-          disableComment: true
-
-      - name: Commit new articles to repo
+      - name: Publishing moved to Cloud Scheduler
         run: |
-          git config user.name "TradeShield AI Bot"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add astrowind/src/data/post/ astrowind/src/assets/images/ || true
-          if git diff --cached --quiet; then
-            echo "Nothing to commit."
-            exit 0
-          fi
-          git commit -m "content: weekly publish $(date +%Y-%m-%d)"
-          git push origin HEAD:main
+          echo "Blog publishing is now handled by Google Cloud Scheduler"
+          echo "Function: https://us-central1-itcloudx-com.cloudfunctions.net/weekly_publish"
+          echo "Schedule: Every Sunday 8am PT (0 15 * * 0)"
+          echo "To trigger manually: curl -X POST [function_url]"

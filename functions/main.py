@@ -945,3 +945,8 @@ def refresh_sanctions(req: https_fn.Request) -> https_fn.Response:
 
     return https_fn.Response(json.dumps(results), status=200, mimetype="application/json")
 
+
+
+
+# ── Weekly Blog Publisher ─────────────────────────────────────────
+from weekly_publisher import weekly_publish
