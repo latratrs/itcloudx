@@ -12,6 +12,7 @@ export interface Props {
 const { post } = Astro.props;
 const resolvedImg = post.image ? await findImage(post.image) : null;
 const imgSrc = resolvedImg ?? defaultImg;
+const imgUrl = typeof imgSrc === 'string' ? imgSrc : imgSrc.src;
 const link = APP_BLOG?.post?.isEnabled ? getPermalink(post.permalink, 'post') : '';
 ---
 
@@ -23,7 +24,7 @@ const link = APP_BLOG?.post?.isEnabled ? getPermalink(post.permalink, 'post') : 
       link ? (
         <a href={link}>
           <img
-            src={imgSrc}
+            src={imgUrl}
             class="w-full md:h-full rounded shadow-lg bg-gray-400 dark:bg-slate-700 object-cover"
             alt={post.title}
             loading="lazy"
@@ -31,7 +32,7 @@ const link = APP_BLOG?.post?.isEnabled ? getPermalink(post.permalink, 'post') : 
         </a>
       ) : (
         <img
-          src={imgSrc}
+          src={imgUrl}
           class="w-full md:h-full rounded shadow-lg bg-gray-400 dark:bg-slate-700 object-cover"
           alt={post.title}
           loading="lazy"
