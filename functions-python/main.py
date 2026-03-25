@@ -5,7 +5,7 @@
 # ═══════════════════════════════════════════════════════════════
 
 from firebase_functions import https_fn, options
-from firebase_admin import initialize_app, firestore
+from firebase_admin import initialize_app, firestore, auth
 from google.cloud.firestore_v1 import SERVER_TIMESTAMP
 from google import genai
 from google.genai import types
@@ -246,6 +246,73 @@ def get_user_tier(email: str) -> str:
     """Check if email has a paid subscription. Returns: free / pro / premium / enterprise"""
     if not email:
         return "free"
+
+
+def _month_key_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m")
+
+
+def _verify_firebase_user(req: https_fn.Request):
+    """Return decoded token dict, or None if missing/invalid."""
+    auth_header = req.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return None
+    id_token = auth_header.split(" ", 1)[1].strip()
+    if not id_token:
+        return None
+    try:
+        return auth.verify_id_token(id_token)
+    except Exception as e:
+        print(f"Auth verify failed: {e}")
+        return None
+
+
+def _usage_doc_id(uid: str, month_key: str) -> str:
+    return f"{uid}_{month_key}"
+
+
+def get_scan_usage_for_uid(uid: str, month_key: str) -> int:
+    doc_id = _usage_doc_id(uid, month_key)
+    try:
+        doc = db.collection("scan_usage").document(doc_id).get()
+        if doc.exists:
+            return int(doc.to_dict().get("count", 0) or 0)
+    except Exception as e:
+        print(f"Usage read error: {e}")
+    return 0
+
+
+def enforce_and_increment_quota(uid: str, tier: str) -> tuple[int, int, int]:
+    """
+    Atomically check + increment monthly scan usage for uid.
+    Returns: (new_count, limit, remaining)
+    Raises: ValueError("quota_exceeded")
+    """
+    month_key = _month_key_now()
+    limit = int(TIER_LIMITS.get(tier or "free", TIER_LIMITS["free"]))
+    doc_id = _usage_doc_id(uid, month_key)
+    ref = db.collection("scan_usage").document(doc_id)
+
+    def txn_fn(txn):
+        snap = ref.get(transaction=txn)
+        current = int((snap.to_dict() or {}).get("count", 0) or 0) if snap.exists else 0
+        if current >= limit:
+            raise ValueError("quota_exceeded")
+        new_count = current + 1
+        txn.set(ref, {"uid": uid, "month": month_key, "count": new_count, "updatedAt": SERVER_TIMESTAMP}, merge=True)
+        return new_count
+
+    try:
+        new_count = db.transaction()(txn_fn)
+    except ValueError:
+        raise
+    except Exception as e:
+        print(f"Quota txn error: {e}")
+        # fail-open (do not block scans due to transient firestore issues)
+        new_count = 1
+
+    remaining = max(0, limit - int(new_count))
+    return int(new_count), limit, remaining
     try:
         docs = (
             db.collection("subscriptions")
@@ -675,23 +742,58 @@ def scan(req: https_fn.Request) -> https_fn.Response:
     ip = req.headers.get("X-Forwarded-For", "unknown").split(",")[0].strip()
     job_id = f"TS-{uuid.uuid4().hex[:8].upper()}"
 
-    # ── Tier detection ───────────────────────────────────────────
-    tier = get_user_tier(email) if email else "free"
 
-    # ── Scan counter enforcement (free tier only) ────────────────
-    if tier == "free":
-        identifier = email if email else ip
-        current_count = get_scan_count(identifier)
-        if current_count >= FREE_SCAN_LIMIT:
+    # ── Firebase Auth (preferred) ──────────────────────────────────
+    decoded = _verify_firebase_user(req)
+    uid = decoded.get("uid") if decoded else None
+    auth_email = (decoded.get("email") or "").strip().lower() if decoded else ""
+
+    # ── Tier detection ───────────────────────────────────────────
+    tier = get_user_tier(auth_email or email) if (auth_email or email) else "free"
+
+    # ── Quota enforcement ───────────────────────────────────────
+    # If authenticated: enforce by uid for ALL tiers.
+    # If not authenticated: fallback to legacy free-tier enforcement by email/ip.
+    scans_used = None
+    scans_limit = None
+    scans_remaining = None
+
+    if uid:
+        try:
+            scans_used, scans_limit, scans_remaining = enforce_and_increment_quota(uid, tier)
+        except ValueError:
+            limit = int(TIER_LIMITS.get(tier or "free", TIER_LIMITS["free"]))
+            month_key = _month_key_now()
             return _json_response(
                 {
-                    "error": f"Free tier limit reached ({FREE_SCAN_LIMIT} scans/month). Upgrade to Pro at itcloudx.com/pricing",
+                    "error": f"Monthly scan limit reached for {month_key}.",
+                    "code": "quota_exceeded",
+                    "tier": tier,
+                    "scans_used": limit,
+                    "scans_limit": limit,
+                    "scans_remaining": 0,
                     "upgrade_url": "https://itcloudx.com/pricing",
-                    "scans_used": current_count,
-                    "scans_limit": FREE_SCAN_LIMIT,
                 },
                 429,
             )
+    else:
+        # Legacy fallback (free only)
+        if tier == "free":
+            identifier = email if email else ip
+            current_count = get_scan_count(identifier)
+            if current_count >= FREE_SCAN_LIMIT:
+                return _json_response(
+                    {
+                        "error": f"Free tier limit reached ({FREE_SCAN_LIMIT} scans/month). Upgrade to Pro at itcloudx.com/pricing",
+                        "code": "quota_exceeded",
+                        "tier": "free",
+                        "scans_used": current_count,
+                        "scans_limit": FREE_SCAN_LIMIT,
+                        "scans_remaining": 0,
+                        "upgrade_url": "https://itcloudx.com/pricing",
+                    },
+                    429,
+                )
 
     # ── Log lead ─────────────────────────────────────────────────
     try:
@@ -858,18 +960,28 @@ def scan(req: https_fn.Request) -> https_fn.Response:
                 print(f"[{job_id}] PDF generated: {len(pdf_bytes)} bytes")
         except Exception as pdf_err:
             print(f"[{job_id}] PDF generation skipped: {pdf_err}")
+        # ── Legacy counter increment (only when unauthenticated + free tier) ─
+        if not uid and tier == "free":
+            identifier = email if email else ip
+            try:
+                new_count = increment_scan_count(identifier)
+                scans_used = new_count
+                scans_limit = FREE_SCAN_LIMIT
+                scans_remaining = max(0, FREE_SCAN_LIMIT - new_count)
+            except Exception as cnt_err:
+                print(f"[{job_id}] Counter error (non-fatal): {cnt_err}")
 
-        # ── Increment scan counter ────────────────────────────────
-        identifier = email if email else ip
-        new_count = 1
-        scans_left = None
-        try:
-            new_count = increment_scan_count(identifier)
-            scans_left = max(0, FREE_SCAN_LIMIT - new_count) if tier == "free" else None
-        except Exception as cnt_err:
-            print(f"[{job_id}] Counter error (non-fatal): {cnt_err}")
+        # Ensure scans_* are always present
+        if scans_used is None:
+            # For paid tiers we can omit remaining if desired, but we want WOW meter:
+            # if uid is missing (shouldn't happen for paid users), fall back to unknown.
+            scans_used = scans_used or 0
+        if scans_limit is None:
+            scans_limit = int(TIER_LIMITS.get(tier or "free", TIER_LIMITS["free"])) if uid else (FREE_SCAN_LIMIT if tier == "free" else None)
+        if scans_remaining is None:
+            scans_remaining = max(0, int(scans_limit) - int(scans_used)) if scans_limit is not None else None
 
-        # ── Save to Firestore (never crash main flow) ─────────────
+        # ── Save to Firestore (never crash main flow) ───────────── (never crash main flow) ─────────────
         try:
             db.collection("compliance_audits").document(job_id).set(
                 {
@@ -911,8 +1023,8 @@ def scan(req: https_fn.Request) -> https_fn.Response:
             "pdf_report": pdf_base64,
             "pdf_error": pdf_error,
             "sanctions_check": sanctions_check,
-            "scans_used": new_count,
-            "scans_remaining": scans_left,
+            "scans_used": scans_used,
+            "scans_remaining": scans_remaining,
             "upgrade_url": "https://itcloudx.com/pricing" if tier == "free" else None,
         }
 
