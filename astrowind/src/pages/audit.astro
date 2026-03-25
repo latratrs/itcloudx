@@ -368,7 +368,7 @@ const metadata = {
 })();
 </script>
 <script is:inline>
-const FUNCTION_URL='https://trade-vision-scan-tmv6tfm3wa-uc.a.run.app';
+const FUNCTION_URL='https://scan-tmv6tfm3wa-uc.a.run.app';
 const MIN_SCAN_MS=12000;
 let selectedFile=null,previewDataURL=null,lastResult=null;
 
@@ -415,7 +415,7 @@ function startScan(){
   fd.append('file',selectedFile);
   fd.append('company',company);
   fd.append('email', email);
-  const fetchPromise=fetch(FUNCTION_URL,{method:'POST',body:fd}).then(r=>{if(r.status===429)throw new Error('429 limit reached');return r.json();}).then(d=>{if(d.error&&d.error.includes('limit'))throw new Error('429 limit reached');return d;});
+  const fetchPromise=fetch(FUNCTION_URL,{method:'POST',body:fd,headers:(window.currentUserToken?{'Authorization':'Bearer '+window.currentUserToken}:{})}).then(r=>r.json().then(j=>{j.__http_status=r.status;return j;})).then(d=>{if(d.__http_status===429||d.code==='quota_exceeded')throw new Error((d.error||'429 limit reached'));return d;});
   const timerPromise=new Promise(resolve=>setTimeout(resolve,12000));
   Promise.all([fetchPromise,timerPromise])
     .then(([data])=>{

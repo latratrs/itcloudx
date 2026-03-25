@@ -118,6 +118,47 @@ const {
       </div>
     </div>
 
+
+    <!-- WOW: Monthly scan meter + plan badge -->
+    <div id="sw-quota-wrap" class="mt-4 hidden">
+      <div class="flex items-center justify-between gap-4">
+        <div class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          Plan: <span id="sw-tier-badge" class="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-xs font-bold text-gray-800 dark:text-gray-200">FREE</span>
+        </div>
+        <div class="text-sm text-gray-600 dark:text-gray-400">
+          Scans remaining: <span id="sw-scans-remaining" class="font-bold text-gray-900 dark:text-white">—</span> /
+          <span id="sw-scans-limit" class="font-bold text-gray-900 dark:text-white">—</span>
+        </div>
+      </div>
+      <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+        <div id="sw-meter-bar" class="h-2 rounded-full bg-teal-600" style="width: 0%"></div>
+      </div>
+      <div class="mt-2 flex items-center justify-end">
+        <a href="/pricing" class="text-sm font-semibold text-teal-700 hover:text-teal-800 dark:text-teal-400 dark:hover:text-teal-300">
+          Upgrade
+        </a>
+      </div>
+    </div>
+
+    <!-- Quota exceeded modal -->
+    <div id="sw-quota-modal" class="fixed inset-0 z-50 hidden">
+      <div class="absolute inset-0 bg-black/50"></div>
+      <div class="relative mx-auto mt-24 w-[92%] max-w-lg rounded-2xl bg-white dark:bg-gray-900 p-6 shadow-2xl border border-gray-200 dark:border-gray-800">
+        <div class="text-xl font-extrabold text-gray-900 dark:text-white">Monthly limit reached</div>
+        <div id="sw-quota-modal-msg" class="mt-2 text-gray-600 dark:text-gray-300 text-sm">
+          You’ve reached your monthly scan limit.
+        </div>
+        <div class="mt-5 flex items-center justify-end gap-3">
+          <button id="sw-quota-close" type="button" class="px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
+            Close
+          </button>
+          <a href="/pricing" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold">
+            Upgrade now
+          </a>
+        </div>
+      </div>
+    </div>
+
     <!-- Scan button -->
     <button
       id="sw-scan-btn"
@@ -445,11 +486,49 @@ document.addEventListener('astro:page-load', function () {
 
     // If no endpoint configured, use built-in demo data
     var scanPromise = ENDPOINT
-      ? fetch(ENDPOINT, { method: 'POST', body: fd }).then(function (r) { return r.json(); })
+      ? (function () {
+          // Attach Firebase Auth ID token if available (Google login)
+          var getToken = function () {
+            try {
+              if (window.firebase && firebase.auth && firebase.auth().currentUser) {
+                return firebase.auth().currentUser.getIdToken(true);
+              }
+            } catch (e) {}
+            return Promise.resolve(null);
+          };
+
+          return getToken().then(function (token) {
+            var headers = {};
+            if (token) headers['Authorization'] = 'Bearer ' + token;
+
+            return fetch(ENDPOINT, { method: 'POST', body: fd, headers: headers }).then(function (r) {
+              return r.json().then(function (j) {
+                // Preserve HTTP status on the parsed object
+                j.__http_status = r.status;
+                return j;
+              });
+            });
+          });
+        })()
       : Promise.resolve(swDemoData(selectedFile.name));
 
     scanPromise
       .then(function (data) {
+        if (data && data.__http_status === 429 && (data.code === 'quota_exceeded' || (data.error || '').toLowerCase().indexOf('limit') >= 0)) {
+          try {
+            var modal = document.getElementById('sw-quota-modal');
+            var msg = document.getElementById('sw-quota-modal-msg');
+            var closeBtn = document.getElementById('sw-quota-close');
+            if (msg) msg.textContent = data.error || 'You have reached your monthly scan limit.';
+            if (closeBtn) closeBtn.onclick = function () { modal && modal.classList.add('hidden'); };
+            if (modal) modal.classList.remove('hidden');
+          } catch (e) {}
+          // Also show error screen message
+          errorMsg.textContent = data.error || 'Monthly scan limit reached.';
+          swOnly(scrError);
+          return;
+        }
+
         progressBar.style.width = '100%';
         progressBar.parentElement.setAttribute('aria-valuenow', 100);
         setTimeout(function () { swRenderResults(data); }, 500);
@@ -467,6 +546,33 @@ document.addEventListener('astro:page-load', function () {
       swOnly(scrError);
       return;
     }
+
+    // WOW meter
+    try {
+      var quotaWrap = document.getElementById('sw-quota-wrap');
+      var tierBadge = document.getElementById('sw-tier-badge');
+      var remEl = document.getElementById('sw-scans-remaining');
+      var limEl = document.getElementById('sw-scans-limit');
+      var barEl = document.getElementById('sw-meter-bar');
+
+      if (quotaWrap && (data.scans_limit != null || data.scans_remaining != null || data.tier)) {
+        quotaWrap.classList.remove('hidden');
+        var tier = (data.tier || 'free').toString().toUpperCase();
+        if (tierBadge) tierBadge.textContent = tier;
+
+        var limit = (data.scans_limit != null) ? Number(data.scans_limit) : null;
+        var remaining = (data.scans_remaining != null) ? Number(data.scans_remaining) : null;
+
+        if (remEl) remEl.textContent = (remaining != null && !Number.isNaN(remaining)) ? String(remaining) : '—';
+        if (limEl) limEl.textContent = (limit != null && !Number.isNaN(limit)) ? String(limit) : '—';
+
+        if (barEl && limit && remaining != null && !Number.isNaN(remaining)) {
+          var used = Math.max(0, limit - remaining);
+          var pct = Math.max(0, Math.min(100, Math.round((used / limit) * 100)));
+          barEl.style.width = pct + '%';
+        }
+      }
+    } catch (e) {}
 
     // Stats
     document.getElementById('sw-stat-labels').textContent   = (data.labels   || []).length;

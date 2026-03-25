@@ -184,6 +184,8 @@ const organizationSchema = {
         <p id="res-meta" class="text-white/40 font-mono text-xs tracking-wide mb-3"></p>
         <p id="res-summary" class="text-gray-300 text-base leading-relaxed"></p>
       </div>
+  <div id="quota-meter" class="mt-2 text-sm font-semibold text-teal-600 dark:text-teal-400"></div>
+
       <div class="bg-white/10 border border-white/20 rounded-2xl p-6 text-center min-w-[140px]">
         <div id="res-score-num" class="text-5xl font-black text-yellow-400">0</div>
         <div class="text-xs font-bold tracking-widest text-white/40 mt-1">RISK SCORE</div>
@@ -782,7 +784,7 @@ const organizationSchema = {
 })();
 </script>
 <script is:inline>
-const FUNCTION_URL='https://trade-vision-scan-tmv6tfm3wa-uc.a.run.app';
+const FUNCTION_URL='https://scan-tmv6tfm3wa-uc.a.run.app';
 const MIN_SCAN_MS=12000;
 let selectedFile=null,previewDataURL=null,lastResult=null;
 
@@ -829,7 +831,7 @@ function startScan(){
   fd.append('file',selectedFile);
   fd.append('company',company);
   fd.append('email', email);
-  const fetchPromise=fetch(FUNCTION_URL,{method:'POST',body:fd}).then(r=>{if(r.status===429)throw new Error('429 limit reached');return r.json();}).then(d=>{if(d.error&&d.error.includes('limit'))throw new Error('429 limit reached');return d;});
+  const fetchPromise=fetch(FUNCTION_URL,{method:'POST',body:fd,headers:(window.currentUserToken?{'Authorization':'Bearer '+window.currentUserToken}:{})}).then(r=>r.json().then(j=>{j.__http_status=r.status;return j;})).then(d=>{if(d.__http_status===429||d.code==='quota_exceeded')throw new Error((d.error||'429 limit reached'));return d;});
   const timerPromise=new Promise(resolve=>setTimeout(resolve,12000));
   Promise.all([fetchPromise,timerPromise])
     .then(([data])=>{
@@ -865,6 +867,18 @@ function renderResults(data){
   SR.querySelector('#res-icon').textContent=score>=67?'🚨':score>=34?'⚠️':'✅';
   SR.querySelector('#res-summary').textContent=ship.summary||data.summary||'';
   SR.querySelector('#res-meta').innerHTML='JOB: '+(data.job_id||data.jobId||'—')+' — COMPANY: '+(data.company_name||data.company||document.getElementById('company')?.value||'—')+' — '+new Date().toDateString().toUpperCase()+'<br/><span class="text-teal-400 font-bold tracking-widest mt-2 inline-block">🛡️ SCANNED BY SHERLOCK VISION API</span>';
+  try{
+    var qm=document.getElementById('quota-meter');
+    if(qm){
+      var tier=(data.tier||'free').toUpperCase();
+      if(data.scans_limit!=null && data.scans_remaining!=null){
+        qm.textContent='PLAN: '+tier+' · SCANS REMAINING THIS MONTH: '+data.scans_remaining+' / '+data.scans_limit;
+      }else{
+        qm.textContent='PLAN: '+tier;
+      }
+    }
+  }catch(e){}
+
   let cleared=0,review=0,flagged=0;
   products.forEach(p=>{const r=(p.risk_level||'').toUpperCase();if(r==='LOW')cleared++;else if(r==='HIGH')flagged++;else review++;});
   SR.querySelector('#stat-total').textContent=products.length;
