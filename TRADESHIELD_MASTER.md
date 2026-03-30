@@ -184,8 +184,17 @@ cd ~/itcloudx && firebase deploy --only hosting
 # Full weekly publish (local)
 ~/itcloudx/publish.sh
 
-# Generate articles only
+# Generate articles only (local)
 python3 ~/itcloudx/news_scraper_v2.py
+
+# Trigger weekly publisher manually (Cloud Function)
+curl -X POST https://us-central1-itcloudx-com.cloudfunctions.net/weekly_publish
+
+# View scan function logs
+cd ~/itcloudx && npx -y firebase-tools@latest functions:log --only scan --lines 100
+
+# Deploy scan function only
+cd ~/itcloudx && npx -y firebase-tools@latest deploy --only functions:python-scanner
 
 # Deploy Cloud Function
 cd ~/itcloudx/functions && gcloud functions deploy weekly_publish \
@@ -272,7 +281,10 @@ faq:
 - Section 301/232/122 surcharge calculation
 - 30-day Firestore scan history with TTL
 - Weekly AI blog with Imagen 4 cover images
-- Cloud Scheduler for Sunday auto-publish
+- Cloud Scheduler for Sunday auto-publish (weekly_publish function)
+- PDF delivered as base64 in response (no Firebase Storage needed)
+- Scan counter + tier enforcement in Cloud Function
+- leads.set(merge=True) — Firestore upsert on every scan
 
 ### 🔧 In Development
 - Firebase Auth scan counter enforcement (5 free/month)
@@ -363,6 +375,13 @@ BaseHead.astro injects: SoftwareApplication, FAQPage, Organization, Article sche
 | Astro build slow | ~90s due to astro-compress image optimization |
 | GitHub Actions push conflict | Disabled — use Cloud Scheduler instead |
 | Related posts grey images | Fixed: GridItem uses findImage() + imgUrl = imgSrc.src |
+| Scan score = 0 | Fixed: pdf_url scope bug crashed response — moved pdf_url/pdf_base64/pdf_error declarations before try block |
+| PDF not available error | Fixed: Removed Firebase Storage upload (no bucket provisioned) — PDF now returned as base64 directly |
+| Firestore leads 404 | Fixed: Changed leads.update() → leads.set(merge=True) |
+| Firebase Storage | Not provisioned — PDFs delivered via base64 in response body instead |
+| Weekly publish GitHub Actions | Disabled — replaced with Cloud Scheduler + weekly_publish Cloud Function |
+| Git push auth | No stored credentials — use: git push https://latratrs:TOKEN@github.com/latratrs/itcloudx.git main |
+| GitHub token scope | Needs repo + workflow scopes for pushing workflow files |
 
 ---
 

@@ -7,8 +7,6 @@
 from firebase_functions import https_fn, options
 from firebase_admin import initialize_app, firestore, auth
 from google.cloud.firestore_v1 import SERVER_TIMESTAMP
-from google import genai
-from google.genai import types
 import os, uuid, json, io, csv, re, requests, hashlib
 from datetime import datetime, timezone, timedelta
 
@@ -246,6 +244,22 @@ def get_user_tier(email: str) -> str:
     """Check if email has a paid subscription. Returns: free / pro / premium / enterprise"""
     if not email:
         return "free"
+    try:
+        docs = (
+            db.collection("subscriptions")
+            .where("email", "==", email)
+            .where("status", "==", "active")
+            .limit(1)
+            .get()
+        )
+        for doc in docs:
+            tier = doc.to_dict().get("tier", "free")
+            if tier not in ("free", "pro", "premium", "enterprise"):
+                return "free"
+            return tier
+    except Exception:
+        pass
+    return "free"
 
 
 def _month_key_now() -> str:
@@ -313,22 +327,6 @@ def enforce_and_increment_quota(uid: str, tier: str) -> tuple[int, int, int]:
 
     remaining = max(0, limit - int(new_count))
     return int(new_count), limit, remaining
-    try:
-        docs = (
-            db.collection("subscriptions")
-            .where("email", "==", email)
-            .where("status", "==", "active")
-            .limit(1)
-            .get()
-        )
-        for doc in docs:
-            tier = doc.to_dict().get("tier", "free")
-            if tier not in ("free", "pro", "premium", "enterprise"):
-                return "free"
-            return tier
-    except Exception:
-        pass
-    return "free"
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -451,153 +449,7 @@ def extract_content(file_bytes: bytes, mime_type: str, filename: str):
 # PDF REPORT GENERATOR
 # ══════════════════════════════════════════════════════════════════
 
-def generate_pdf_report(audit_data: dict, job_id: str, filename: str, tier: str) -> bytes:
-    """Generate compliance PDF report using ReportLab."""
-    try:
-        from reportlab.lib.pagesizes import letter
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.lib.units import inch
-        from reportlab.lib import colors
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
-        from reportlab.lib.enums import TA_CENTER, TA_RIGHT
-
-        buf = io.BytesIO()
-        doc = SimpleDocTemplate(
-            buf,
-            pagesize=letter,
-            rightMargin=0.75 * inch,
-            leftMargin=0.75 * inch,
-            topMargin=0.75 * inch,
-            bottomMargin=0.75 * inch,
-        )
-
-        styles = getSampleStyleSheet()
-        navy = colors.HexColor("#0b1e3d")
-        red = colors.HexColor("#cc2222")
-        yellow = colors.HexColor("#cc8800")
-        green = colors.HexColor("#007744")
-        gray = colors.HexColor("#666666")
-
-        body_style = ParagraphStyle("Body", fontSize=10, textColor=colors.black, spaceAfter=4)
-        warning_style = ParagraphStyle("Warn", fontSize=10, textColor=red, spaceAfter=4, fontName="Helvetica-Bold")
-
-        story = []
-        now = datetime.now().strftime("%B %d, %Y %I:%M %p PT")
-
-        # ── HEADER BANNER ──────────────────────────────────────────
-        header_data = [
-            [
-                Paragraph(
-                    '<font color="white"><b>🛡 TradeShield AI</b></font>',
-                    ParagraphStyle("HT", fontSize=20, textColor=colors.white, fontName="Helvetica-Bold"),
-                ),
-                Paragraph(
-                    f'<font color="#aaddff">Job: {job_id}</font><br/><font color="#aaddff">{now}</font>',
-                    ParagraphStyle("HS", fontSize=8, textColor=colors.white, alignment=TA_RIGHT, leading=12),
-                ),
-            ]
-        ]
-        header_table = Table(header_data, colWidths=[4.5 * inch, 2.75 * inch])
-        header_table.setStyle(
-            TableStyle(
-                [
-                    ("BACKGROUND", (0, 0), (-1, -1), navy),
-                    ("TOPPADDING", (0, 0), (-1, -1), 14),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 14),
-                    ("LEFTPADDING", (0, 0), (0, 0), 16),
-                    ("RIGHTPADDING", (-1, 0), (-1, -1), 16),
-                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ]
-            )
-        )
-        story.append(header_table)
-        story.append(Spacer(1, 16))
-
-        # Watermark notice for free tier
-        if tier == "free":
-            story.append(Paragraph("⚠ FREE TIER — Upgrade to Pro/Premium for full unredacted analysis", warning_style))
-            story.append(Spacer(1, 8))
-
-        shipment = audit_data.get("shipment_summary", {})
-        products = audit_data.get("products", [])
-
-        story.append(Paragraph(f"Document: {filename}", body_style))
-        story.append(Paragraph(f"Products extracted: {len(products)}", body_style))
-        story.append(Paragraph(f"Overall risk score: {shipment.get('overall_risk_score', 0)}", body_style))
-        story.append(Paragraph(f"Recommendation: {shipment.get('overall_recommendation', 'REVIEW')}", body_style))
-        story.append(Spacer(1, 12))
-
-        # Free tier: show max 3 products
-        if tier == "free" and len(products) > 3:
-            story.append(Paragraph(f"⚠️ Showing 3 of {len(products)} products. Upgrade for full report.", warning_style))
-            products = products[:3]
-
-        if not products:
-            story.append(Paragraph("No products were extracted from this document.", body_style))
-        else:
-            for i, p in enumerate(products, 1):
-                story.append(Paragraph(f"{i}. {p.get('name', 'Unknown Product')}", body_style))
-                story.append(Paragraph(f"HS Code: {p.get('hs_code', 'N/A')}", body_style))
-                story.append(Paragraph(f"Duty rate: {p.get('duty_rate', 'N/A')}", body_style))
-                story.append(Paragraph(f"Risk: {p.get('risk_level', 'LOW')} ({p.get('risk_score', 0)}/100)", body_style))
-                story.append(Spacer(1, 6))
-
-        story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#ccddee")))
-        story.append(Spacer(1, 6))
-        story.append(
-            Paragraph(
-                "This report is generated by TradeShield AI (itcloudx.com) for informational purposes only. "
-                "It does not constitute legal advice. Always consult a licensed customs broker for final decisions. "
-                "© 2026 Deccod / ITCloudX. All rights reserved.",
-                ParagraphStyle("Footer", fontSize=8, textColor=gray, alignment=TA_CENTER),
-            )
-        )
-
-        doc.build(story)
-        pdf_bytes = buf.getvalue()
-
-        # Free tier: merge watermark ON TOP using pypdf (draws over colored backgrounds)
-        if tier == "free":
-            from pypdf import PdfReader, PdfWriter
-            from reportlab.pdfgen import canvas as rl_canvas
-            from reportlab.lib.pagesizes import letter as rl_letter
-
-            wm_buf = io.BytesIO()
-            wm = rl_canvas.Canvas(wm_buf, pagesize=rl_letter)
-            wm.saveState()
-            wm.setFont("Helvetica-Bold", 72)
-            wm.setFillColorRGB(0.5, 0.5, 0.5, alpha=0.55)
-            wm.translate(306, 396)
-            wm.rotate(45)
-            wm.drawCentredString(0, 40, "FREE PREVIEW")
-            wm.setFont("Helvetica-Bold", 34)
-            wm.drawCentredString(0, -50, "UPGRADE TO PRO")
-            wm.restoreState()
-            wm.save()
-            wm_buf.seek(0)
-
-            original = PdfReader(io.BytesIO(pdf_bytes))
-            watermark_page = PdfReader(wm_buf).pages[0]
-            writer = PdfWriter()
-            for page in original.pages:
-                page.merge_page(watermark_page)
-                writer.add_page(page)
-            out = io.BytesIO()
-            writer.write(out)
-            return out.getvalue()
-
-        return pdf_bytes
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        print(f"PDF generation error: {e}")
-        return b""
-
-
-# ══════════════════════════════════════════════════════════════════
-# SAFE JSON PARSER
-# ══════════════════════════════════════════════════════════════════
+from pdf_report_oldstyle import build_pdf_oldstyle
 
 def safe_parse_json(raw: str) -> dict:
     cleaned = raw.strip()
@@ -796,6 +648,9 @@ def scan(req: https_fn.Request) -> https_fn.Response:
                 )
 
     # ── Log lead ─────────────────────────────────────────────────
+    pdf_url = None  # declared here so always in scope
+    pdf_base64 = None
+    pdf_error = None
     try:
         db.collection("leads").document(job_id).set(
             {
@@ -909,6 +764,10 @@ def scan(req: https_fn.Request) -> https_fn.Response:
             f"Be thorough — missing a sanctions hit can result in $1M+ fines."
         )
 
+        # ── Call Gemini ───────────────────────────────────────────
+        from google import genai
+        from google.genai import types
+
         if content["type"] == "text":
             prompt_parts = [instruction + "\n\n" + content["data"]]
         else:
@@ -917,7 +776,6 @@ def scan(req: https_fn.Request) -> https_fn.Response:
                 instruction,
             ]
 
-        # ── Call Gemini ───────────────────────────────────────────
         client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
         response = client.models.generate_content(
             model="gemini-2.5-flash",
@@ -953,13 +811,19 @@ def scan(req: https_fn.Request) -> https_fn.Response:
         pdf_base64 = None
         pdf_error = None
         try:
-            pdf_bytes = generate_pdf_report(audit_data, job_id, filename, tier)
+            # Lazy import to keep cold-start fast
+            from pdf_report_oldstyle import build_pdf_oldstyle
+            pdf_bytes = build_pdf_oldstyle(audit_data, job_id, filename, tier)
             if pdf_bytes:
                 import base64
-                pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
+                pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
                 print(f"[{job_id}] PDF generated: {len(pdf_bytes)} bytes")
+        
+                pdf_url = f"data:application/pdf;base64,{pdf_base64}"
+                print(f"[{job_id}] PDF generated: {len(pdf_bytes)} bytes — base64 ready")
         except Exception as pdf_err:
-            print(f"[{job_id}] PDF generation skipped: {pdf_err}")
+            pdf_error = str(pdf_err)
+            print(f"[{job_id}] PDF generation/upload skipped: {pdf_error}")
         # ── Legacy counter increment (only when unauthenticated + free tier) ─
         if not uid and tier == "free":
             identifier = email if email else ip
@@ -997,14 +861,16 @@ def scan(req: https_fn.Request) -> https_fn.Response:
                     "timestamp": SERVER_TIMESTAMP,
                 }
             )
-            db.collection("leads").document(job_id).update(
-                {
-                    "status": "COMPLETED",
-                    "overall_risk_score": shipment.get("overall_risk_score", 0),
-                    "product_count": len(products),
-                    "tier": tier,
-                }
-            )
+            leads_update = {
+                "status": "COMPLETED",
+                "overall_risk_score": shipment.get("overall_risk_score", 0),
+                "product_count": len(products),
+                "tier": tier,
+            }
+            if pdf_url:
+                leads_update["pdf_url"] = pdf_url
+                leads_update["pdf_path"] = f"reports/{job_id}.pdf"
+            db.collection("leads").document(job_id).set(leads_update, merge=True)
         except Exception as fs_err:
             print(f"[{job_id}] Firestore save error (non-fatal): {fs_err}")
 
@@ -1021,6 +887,7 @@ def scan(req: https_fn.Request) -> https_fn.Response:
             "high_risk_count": shipment.get("high_risk_count", 0),
             "products": products if tier != "free" else products[:3],
             "pdf_report": pdf_base64,
+            "pdf_url": pdf_url,
             "pdf_error": pdf_error,
             "sanctions_check": sanctions_check,
             "scans_used": scans_used,
@@ -1043,7 +910,7 @@ def scan(req: https_fn.Request) -> https_fn.Response:
             db.collection("compliance_audits").document(job_id).set(
                 {"jobId": job_id, "email": email, "status": "FAILED", "error": str(e), "timestamp": SERVER_TIMESTAMP}
             )
-            db.collection("leads").document(job_id).update({"status": "FAILED"})
+            db.collection("leads").document(job_id).set({"status": "FAILED"}, merge=True)
         except Exception:
             pass
         return _json_response({"error": "Scan failed. Please try again or contact support.", "jobId": job_id}, 500)
