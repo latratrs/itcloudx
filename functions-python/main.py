@@ -12,6 +12,7 @@ from datetime import datetime, timezone, timedelta
 
 from hts_lookup import enrich_products, validate_hts
 from cross_lookup import get_cross_summary
+from taric_lookup import get_taric_summary
 from report_validator import validate_and_fix
 # ── Initialize ───────────────────────────────────────────────────
 initialize_app()
@@ -842,6 +843,30 @@ def scan(req: https_fn.Request) -> https_fn.Response:
             print(f"[{job_id}] CROSS: {cross_count} products with ruling precedents")
         except Exception as ce:
             print(f"[{job_id}] CROSS lookup skipped: {ce}")
+
+        # ── TARIC EU lookup (runs when EU origin/dest detected) ──
+        try:
+            # Detect if this is an EU-related document
+            doc_text_lower = str(content.get("data",""))[:500].lower()
+            is_eu_doc = any(kw in doc_text_lower for kw in
+                           ["eori","eur.1","sad","taric","cn code","zoll","douane",
+                            "rotterdam","hamburg","antwerp","germany","netherlands",
+                            "france","italy","spain","poland","eu import"])
+            if is_eu_doc:
+                for p in products:
+                    cn = p.get("hs_code","")
+                    name = p.get("name","")
+                    taric = get_taric_summary(cn, name, "CN")
+                    p["taric_mfn"]    = taric.get("mfn_rate","")
+                    p["taric_add"]    = taric.get("add_duty","")
+                    p["taric_cbam"]   = taric.get("cbam_required", False)
+                    p["taric_issues"] = taric.get("issues", [])
+                    p["taric_url"]    = taric.get("taric_url","")
+                cbam_count = sum(1 for p in products if p.get("taric_cbam"))
+                add_count  = sum(1 for p in products if p.get("taric_add") and p["taric_add"] != "0.0%")
+                print(f"[{job_id}] TARIC EU: {cbam_count} CBAM items, {add_count} ADD items")
+        except Exception as te:
+            print(f"[{job_id}] TARIC lookup skipped: {te}")
 
         # ── Validate + auto-fix report data ─────────────────────
         try:
