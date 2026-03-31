@@ -10,6 +10,9 @@ from google.cloud.firestore_v1 import SERVER_TIMESTAMP
 import os, uuid, json, io, csv, re, requests, hashlib
 from datetime import datetime, timezone, timedelta
 
+from hts_lookup import enrich_products, validate_hts
+from cross_lookup import get_cross_summary
+from report_validator import validate_and_fix
 # ── Initialize ───────────────────────────────────────────────────
 initialize_app()
 db = firestore.client()
@@ -50,35 +53,49 @@ EU_LIST_URL = "https://webgate.ec.europa.eu/fsd/fsf/public/files/xmlFullSanction
 
 # ── Gemini System Prompt ─────────────────────────────────────────
 SYSTEM_INSTRUCTION = """
-You are TradeShield AI, an elite US customs compliance auditor with deep expertise in:
-- HTS/HS code classification (CBP HTSUS 2026 schedule) — always return FULL 10-digit HTS codes (format: XXXX.XX.XXXX)
-- OFAC SDN sanctions screening
-- EU and UN consolidated sanctions lists
-- UFLPA forced labor supply chain checks
-- Stacked tariff analysis: Section 301 (China trade war), Section 232 (steel/aluminum), Section 122, AD/CVD
+You are TradeShield AI, a US Customs compliance analyst. Your job is to analyze trade documents and produce structured, accurate, human-readable compliance assessments.
 
-Analyze the provided trade document. Extract EVERY product/item and audit each one.
+SCOPE: US imports and exports only. Apply CBP HTSUS 2026, OFAC SDN, UFLPA, and all current US trade regulations.
+
+ACCURACY RULES (CRITICAL):
+- Use FULL 10-digit HTS codes (format: XXXX.XX.XXXX). Never guess — if uncertain, use the closest verified code and flag for review.
+- section_301_rate: China origin goods only. List 1/2/3 = 25%, List 4A = 7.5%. Set "N/A" if not from China.
+- section_232_rate: Steel = 25%, Aluminum = 10%, regardless of origin. Set "N/A" if not applicable.
+- section_122_rate: Emergency tariff authority — currently N/A for most goods.
+- total_duty_rate: Must equal duty_rate + section_301 + section_232 (numeric sum).
+- risk_score: Integer 0-100. LOW=0-33, MEDIUM=34-66, HIGH=67-100.
+
+WRITING RULES (CRITICAL):
+- compliance_notes: Write in plain English. Be specific. Example: "This product from China is subject to 25% Section 301 List 3 surcharge in addition to the 2.5% MFN base rate, for a total of 27.5%. Ensure HTS 8471.30.0100 matches the exact product specification — misclassification penalties start at $10,000."
+- recommended_action: Use one of: APPROVE / REVIEW / HOLD / REJECT. Always explain WHY in compliance_notes.
+- sanctions_detail: Be specific. If cleared: "Screened against OFAC SDN, EU Consolidated, and UN Security Council lists — no matches found." If flagged: explain the exact match.
+- summary (shipment_summary): Write 2-3 sentences. State total products, highest risks found, and single most important action the importer should take.
+
+CROSS-DOCUMENT CHECKS:
+- Flag if product descriptions are vague (e.g., "parts", "components", "goods") — these trigger CBP scrutiny.
+- Flag if no country of origin is specified — required on all commercial invoices.
+- Flag if values seem unusually low (potential undervaluation fraud).
 
 Return ONLY valid JSON — no markdown, no explanation, no preamble:
 {
   "products": [
     {
-      "name": "Product Name",
+      "name": "Exact product name from document",
       "hs_code": "XXXX.XX.XXXX",
       "duty_rate": "X.X%",
-      "section_301_rate": "25% (List 3 - from China)" or "N/A",
-      "section_232_rate": "25% (steel article)" or "N/A",
+      "section_301_rate": "25% (List 3 - China)" or "N/A",
+      "section_232_rate": "25% (steel)" or "N/A",
       "section_122_rate": "N/A",
-      "total_duty_rate": "29.9%",
-      "tariff_layers": "4.9% MFN base + 25% Section 301 = 29.9% total",
-      "estimated_duty_usd": "estimated duty in USD if value is known, else null",
+      "total_duty_rate": "27.5%",
+      "tariff_layers": "2.5% MFN base + 25% Section 301 List 3 = 27.5% total",
+      "estimated_duty_usd": "1250.00 (based on declared value $5,000 x 27.5%)" or null,
       "sanctions_status": "CLEARED",
-      "sanctions_detail": "No matches found on OFAC SDN, EU, or UN lists",
-      "risk_level": "LOW",
-      "risk_score": 25,
-      "compliance_notes": "Brief actionable note for the importer",
-      "required_documents": ["Commercial Invoice", "Packing List"],
-      "recommended_action": "APPROVE"
+      "sanctions_detail": "Screened against OFAC SDN, EU Consolidated, and UN Security Council lists — no matches found.",
+      "risk_level": "MEDIUM",
+      "risk_score": 55,
+      "compliance_notes": "Specific, plain-English explanation of risks and required actions.",
+      "required_documents": ["Commercial Invoice", "Packing List", "Certificate of Origin"],
+      "recommended_action": "REVIEW"
     }
   ],
   "shipment_summary": {
@@ -88,17 +105,12 @@ Return ONLY valid JSON — no markdown, no explanation, no preamble:
     "low_risk_count": 0,
     "overall_risk_score": 0,
     "overall_recommendation": "APPROVE",
-    "summary": "One sentence summary of compliance status",
-    "potential_fine_exposure": "estimated fine exposure if violations found, else null"
+    "summary": "2-3 sentence plain-English summary of the shipment compliance status and top action required.",
+    "potential_fine_exposure": "$X,XXX estimated based on Y violations found" or null,
+    "cross_document_flags": ["List any inconsistencies found across documents"],
+    "top_action_required": "Single most important thing the importer must do right now."
   }
 }
-
-Rules:
-- ALWAYS use full 10-digit HTS codes. Never use 6-digit or 8-digit.
-- section_301_rate: applies to goods from China. List 1/2/3 = 25%, List 4A = 7.5%. Set N/A if not from China.
-- section_232_rate: steel products = 25%, aluminum = 10%, regardless of origin. Set N/A if not applicable.
-- total_duty_rate: sum of duty_rate + section_301_rate + section_232_rate.
-- Risk: LOW (0-33) standard; MEDIUM (34-66) needs review; HIGH (67-100) sanctions/UFLPA/major tariff issue.
 """
 
 
@@ -577,8 +589,8 @@ def paypal_webhook(req: https_fn.Request) -> https_fn.Response:
 @https_fn.on_request(
     secrets=["GEMINI_API_KEY"],
     cors=options.CorsOptions(cors_origins=ALLOWED_ORIGINS, cors_methods=["POST", "OPTIONS"]),
-    memory=options.MemoryOption.GB_1,
-    timeout_sec=120,
+    memory=options.MemoryOption.GB_2,
+    timeout_sec=540,
     region="us-central1",
 )
 def scan(req: https_fn.Request) -> https_fn.Response:
@@ -784,7 +796,7 @@ def scan(req: https_fn.Request) -> https_fn.Response:
                 system_instruction=SYSTEM_INSTRUCTION,
                 temperature=0.0,
                 response_mime_type="application/json",
-                max_output_tokens=8192,
+                max_output_tokens=65536,
             ),
         )
 
@@ -798,6 +810,48 @@ def scan(req: https_fn.Request) -> https_fn.Response:
         products = audit_data.get("products", [])
         shipment = audit_data.get("shipment_summary", {})
         print(f"[{job_id}] Gemini returned {len(products)} products, score={shipment.get('overall_risk_score',0)}")
+
+        # ── USITC HTS Validation (free government API) ────────────────
+        try:
+            products = enrich_products(products)
+            usitc_verified = sum(1 for p in products if p.get("usitc_verified"))
+            usitc_flagged  = sum(1 for p in products if not p.get("usitc_verified"))
+            print(f"[{job_id}] USITC: {usitc_verified} verified, {usitc_flagged} flagged")
+            if usitc_flagged > 0:
+                shipment["cross_document_flags"] = shipment.get("cross_document_flags", [])
+                shipment["cross_document_flags"].append(
+                    f"{usitc_flagged} HTS code(s) could not be verified against USITC HTSUS — manual review required"
+                )
+        except Exception as ue:
+            print(f"[{job_id}] USITC enrichment skipped: {ue}")
+
+        # ── CROSS CBP Rulings lookup (HIGH + MEDIUM risk items) ──
+        try:
+            for p in products:
+                rl = (p.get("risk_level","LOW") or "LOW").upper()
+                if rl in ("HIGH", "MEDIUM"):
+                    cross = get_cross_summary(
+                        p.get("name",""),
+                        p.get("hs_code","")
+                    )
+                    p["cross_status"]  = cross.get("status","")
+                    p["cross_rulings"] = cross.get("rulings",[])
+                    p["cross_summary"] = cross.get("summary","")
+                    p["cross_hts_match"] = cross.get("hts_match", False)
+            cross_count = sum(1 for p in products if p.get("cross_rulings"))
+            print(f"[{job_id}] CROSS: {cross_count} products with ruling precedents")
+        except Exception as ce:
+            print(f"[{job_id}] CROSS lookup skipped: {ce}")
+
+        # ── Validate + auto-fix report data ─────────────────────
+        try:
+            audit_data, val_warnings = validate_and_fix(audit_data)
+            products = audit_data.get("products", [])
+            shipment = audit_data.get("shipment_summary", {})
+            if val_warnings:
+                shipment["cross_document_flags"] = shipment.get("cross_document_flags", []) + val_warnings[:3]
+        except Exception as ve:
+            print(f"[{job_id}] Validator skipped: {ve}")
 
         # ── Real OFAC sanctions check on consignee/company ───────
         sanctions_check = None

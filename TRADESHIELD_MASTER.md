@@ -111,6 +111,13 @@ Next: enforce monthly quotas by Firebase Auth UID + show “WOW” scans-remaini
 | trade-vision-scan | us-central1 | Alternative scanner endpoint |
 | weekly_publish | https://us-central1-itcloudx-com.cloudfunctions.net/weekly_publish | Weekly blog publisher |
 
+### Government APIs Integrated
+| API | URL | Purpose |
+|-----|-----|---------|
+| USITC HTSUS | https://hts.usitc.gov/reststop/search | Validate HTS codes exist in schedule |
+| CBP CROSS | https://rulings.cbp.gov/api/search | 220,303+ CBP ruling precedents |
+| TARIC EU | https://taric.europa.eu/api/ | EU tariff rates + measures (planned) |
+
 ### Deploy Cloud Function (scan)
 ```bash
 gcloud functions deploy scan --gen2 --runtime python311 --trigger-http \
@@ -285,6 +292,11 @@ faq:
 - PDF delivered as base64 in response (no Firebase Storage needed)
 - Scan counter + tier enforcement in Cloud Function
 - leads.set(merge=True) — Firestore upsert on every scan
+- USITC HTS validation — every code cross-checked against hts.usitc.gov
+- CBP CROSS rulings — real precedent for each product in report
+- Report validator — auto-fixes risk count inconsistencies
+- Broker-grade PDF v3.0 — CBP-compliant language, GRI reasoning, confidence scores
+- Upgraded Gemini prompt — plain-English specific analysis, no boilerplate
 
 ### 🔧 In Development
 - Firebase Auth scan counter enforcement (5 free/month)
@@ -380,6 +392,10 @@ BaseHead.astro injects: SoftwareApplication, FAQPage, Organization, Article sche
 | Firestore leads 404 | Fixed: Changed leads.update() → leads.set(merge=True) |
 | Firebase Storage | Not provisioned — PDFs delivered via base64 in response body instead |
 | Weekly publish GitHub Actions | Disabled — replaced with Cloud Scheduler + weekly_publish Cloud Function |
+| CROSS returns NO_RESULTS | Use first 2-3 words only as keyword; fallback to HTS code search |
+| USITC confidence always MEDIUM | Fixed — table now uses risk_level (single source of truth) not hts_confidence |
+| PDF analysis truncated sentences | Boilerplate stripper regex — fixed with cleaner replacement logic |
+| Report validator | validate_and_fix() called before PDF — auto-corrects risk count mismatches |
 | Git push auth | No stored credentials — use: git push https://latratrs:TOKEN@github.com/latratrs/itcloudx.git main |
 | GitHub token scope | Needs repo + workflow scopes for pushing workflow files |
 
