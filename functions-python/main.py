@@ -851,7 +851,15 @@ def scan(req: https_fn.Request) -> https_fn.Response:
             is_eu_doc = any(kw in doc_text_lower for kw in
                            ["eori","eur.1","sad","taric","cn code","zoll","douane",
                             "rotterdam","hamburg","antwerp","germany","netherlands",
-                            "france","italy","spain","poland","eu import"])
+                            "france","italy","spain","poland","eu import",
+                            "turkey","turkey","istanbul","mersin","india","vietnam",
+                            "japan","multi","asia","multi-origin","multi-region"])
+            # Also trigger TARIC for any non-US-only shipment
+            if not is_eu_doc:
+                origins = [p.get("name","").lower() for p in products]
+                non_us_origins = ["turkey","japan","india","vietnam","germany","france"]
+                is_eu_doc = any(any(o in str(p.get("compliance_notes","")).lower()
+                               for o in non_us_origins) for p in products)
             if is_eu_doc:
                 for p in products:
                     cn = p.get("hs_code","")

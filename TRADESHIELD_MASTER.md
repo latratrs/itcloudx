@@ -116,7 +116,8 @@ Next: enforce monthly quotas by Firebase Auth UID + show “WOW” scans-remaini
 |-----|-----|---------|
 | USITC HTSUS | https://hts.usitc.gov/reststop/search | Validate HTS codes exist in schedule |
 | CBP CROSS | https://rulings.cbp.gov/api/search | 220,303+ CBP ruling precedents |
-| TARIC EU | https://taric.europa.eu/api/ | EU tariff rates + measures (planned) |
+| TARIC EU (static) | EU TARIC schedule built-in | MFN rates, ADD duties, CBAM flags — taric_lookup.py |
+| TARIC EU (live) | Apitalks api.store — early access required | Full live TARIC API when registration approved |
 
 ### Deploy Cloud Function (scan)
 ```bash
@@ -297,6 +298,13 @@ faq:
 - Report validator — auto-fixes risk count inconsistencies
 - Broker-grade PDF v3.0 — CBP-compliant language, GRI reasoning, confidence scores
 - Upgraded Gemini prompt — plain-English specific analysis, no boilerplate
+- TARIC EU lookup — static EU MFN rates, ADD duties, CBAM flags per product
+- Multi-region TARIC trigger — detects Turkey, Japan, India, Vietnam, EU keywords
+- Plan badge fix — shows PRO/FREE tier after scan completes
+- PDF download button added near risk score on audit page
+- Report validator — auto-fixes risk count mismatches before PDF generation
+- CBP CROSS rulings — 220,303+ rulings searched per product
+- Broker-grade PDF v3.0 — GRI reasoning, confidence scores, assumptions block
 
 ### 🔧 In Development
 - Firebase Auth scan counter enforcement (5 free/month)
@@ -393,6 +401,9 @@ BaseHead.astro injects: SoftwareApplication, FAQPage, Organization, Article sche
 | Firebase Storage | Not provisioned — PDFs delivered via base64 in response body instead |
 | Weekly publish GitHub Actions | Disabled — replaced with Cloud Scheduler + weekly_publish Cloud Function |
 | CROSS returns NO_RESULTS | Use first 2-3 words only as keyword; fallback to HTS code search |
+| TARIC not showing in report | Detection requires EU/multi-origin keywords in document; expanded to include Turkey/Japan/India/Vietnam |
+| Plan badge hidden after scan | Fixed: badge.classList.remove("hidden") called in renderResult() |
+| PDF button missing near score | Fixed: button added after res-score-label in audit.astro |
 | USITC confidence always MEDIUM | Fixed — table now uses risk_level (single source of truth) not hts_confidence |
 | PDF analysis truncated sentences | Boilerplate stripper regex — fixed with cleaner replacement logic |
 | Report validator | validate_and_fix() called before PDF — auto-corrects risk count mismatches |
